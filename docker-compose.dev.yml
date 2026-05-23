@@ -1,0 +1,54 @@
+# Docker Compose override untuk mode DEVELOPMENT
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Perbedaan dari production:
+#  - Volume mount source code (hot-reload)
+#  - Expose port DB & Redis untuk debugging
+#  - NODE_ENV=development
+
+name: meetapp-dev
+
+services:
+
+  # Override API: mount src untuk hot-reload
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./services/api/src:/app/src:delegated
+      - /app/node_modules
+    environment:
+      APP_ENV: development
+      NODE_ENV: development
+    command: npm run dev
+
+  # Override Frontend: mount src untuk hot-reload Quasar
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend/src:/app/src:delegated
+      - /app/node_modules
+    ports:
+      - "9000:9000"  # Quasar dev server (akses langsung untuk debug)
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+      VITE_LIVEKIT_URL: ws://localhost:7880
+    command: npm run dev -- --host 0.0.0.0
+
+  # Override Nginx untuk expose port 8080 di dev (karena user terbiasa pakai port)
+  nginx:
+    ports:
+      - "8080:80"
+
+  # Expose postgres port di dev untuk GUI tools (DBeaver, TablePlus, dll)
+  postgres:
+    ports:
+      - "5433:5432"
+
+  # Expose redis port di dev untuk debugging
+  redis:
+    ports:
+      - "6380:6379"

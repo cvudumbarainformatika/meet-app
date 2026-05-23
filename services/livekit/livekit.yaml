@@ -1,0 +1,42 @@
+# =============================================================
+# LiveKit Server Configuration
+# Docs: https://docs.livekit.io/reference/server/config/
+# =============================================================
+
+port: 7880
+rtc:
+  tcp_port: 7881
+  udp_port: 7882
+  use_external_ip: false
+
+# Keys untuk autentikasi API (harus cocok dengan .env)
+keys:
+  devkey: devsecret_panjang_minimal_32karakter
+
+# Redis untuk state sharing (clustering)
+redis:
+  address: redis:6379
+
+# Logging
+logging:
+  level: info
+  pion_level: error
+
+# TURN Server internal (dinonaktifkan karena kita pakai Coturn external)
+turn:
+  enabled: false
+
+# Room defaults
+room:
+  # Max participants per room (0 = unlimited)
+  max_participants: 50
+  # Auto delete room jika kosong (detik)
+  empty_timeout: 300
+  # Izinkan join room yang belum dibuat
+  auto_create: true
+
+# WebHook (opsional, untuk event notification)
+# webhook:
+#   urls:
+#     - http://api:3000/webhook/livekit
+#   api_key: devkey
