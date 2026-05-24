@@ -11,6 +11,7 @@ import {
   ConnectionState,
   LocalParticipant,
   RemoteParticipant,
+  VideoPresets,
 } from 'livekit-client'
 import { useMeetStore } from '@/stores/meet'
 import { Notify } from 'quasar'
@@ -104,7 +105,7 @@ export function useRoom() {
             _syncParticipants()
             Notify.create({
               type: data.raised ? 'info' : 'primary',
-              message: `${participant?.name ?? 'Seseorang'} ${data.raised ? 'mengangkat tangan 🙋' : 'menurunkan tangan'}`,
+              message: `${participant?.name ?? 'Seseorang'} ${data.raised ? 'mengangkat tangan ✋' : 'menurunkan tangan'}`,
               timeout: 3000,
               position: 'top-right'
             })
@@ -177,8 +178,12 @@ export function useRoom() {
       // Connect!
       await room.connect(wsUrl, token)
 
-      // Enable camera & mic sesuai store state
-      await room.localParticipant.enableCameraAndMicrophone()
+      // Enable camera & mic sesuai store state & setelan resolusi terpilih
+      await room.localParticipant.setMicrophoneEnabled(meetStore.isMicEnabled)
+      const preset = VideoPresets[meetStore.cameraResolution] || VideoPresets.h540
+      await room.localParticipant.setCameraEnabled(meetStore.isCameraEnabled, {
+        resolution: preset.resolution
+      })
 
       _syncParticipants()
     } catch (err) {
@@ -210,8 +215,43 @@ export function useRoom() {
   async function toggleCamera() {
     if (!lkRoom.value) return
     const enabled = !meetStore.isCameraEnabled
-    await lkRoom.value.localParticipant.setCameraEnabled(enabled)
+    if (enabled) {
+      const preset = VideoPresets[meetStore.cameraResolution] || VideoPresets.h540
+      await lkRoom.value.localParticipant.setCameraEnabled(true, {
+        resolution: preset.resolution
+      })
+    } else {
+      await lkRoom.value.localParticipant.setCameraEnabled(false)
+    }
     meetStore.toggleCamera()
+  }
+
+  /** Change Camera Resolution seamless */
+  async function changeCameraResolution(resName) {
+    if (!lkRoom.value) return
+    const preset = VideoPresets[resName]
+    if (!preset) return
+
+    meetStore.setCameraResolution(resName)
+
+    if (meetStore.isCameraEnabled) {
+      // Disable and enable seamlessly to re-publish with new resolution constraints
+      await lkRoom.value.localParticipant.setCameraEnabled(false)
+      await lkRoom.value.localParticipant.setCameraEnabled(true, {
+        resolution: preset.resolution
+      })
+    }
+
+    Notify.create({
+      type: 'positive',
+      message: `Kualitas kamera diubah ke ${
+        resName === 'h720' ? 'High Definition (720p)' :
+        resName === 'h1080' ? 'Full HD (1080p)' :
+        resName === 'h360' ? 'Hemat Data (360p)' : 'Standar (540p)'
+      }`,
+      timeout: 3000,
+      position: 'top'
+    })
   }
 
   /** Toggle screen share */
@@ -378,6 +418,7 @@ export function useRoom() {
     disconnect,
     toggleMic,
     toggleCamera,
+    changeCameraResolution,
     toggleScreenShare,
     sendChatMessage,
     sendRaiseHand,

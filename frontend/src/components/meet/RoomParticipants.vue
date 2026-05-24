@@ -62,7 +62,7 @@
                 <span v-if="p.isLocal && isHost" class="text-[9px] font-medium bg-primary/20 text-primary px-1.5 py-0.5 rounded">Host</span>
                 <span v-else-if="!p.isLocal && p.identity === hostName" class="text-[9px] font-medium bg-primary/20 text-primary px-1.5 py-0.5 rounded">Host</span>
                 <span v-if="p.isHandRaised" class="text-[9px] font-medium bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                  <span>🙋</span> Angkat Tangan
+                  <span>✋</span> Angkat Tangan
                 </span>
               </div>
             </div>

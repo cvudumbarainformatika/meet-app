@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-2 sm:px-6 py-2 sm:py-4 bg-background/80 border-t border-border flex-shrink-0 z-20">
+  <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-3 sm:px-6 py-2.5 sm:py-4 bg-background/80 border-t border-border flex-shrink-0 z-20">
 
     <!-- Mic -->
     <ControlButton
@@ -31,44 +31,51 @@
       @toggle="emit('toggle-screen-share')"
     />
 
+    <!-- Spacer -->
+    <div class="w-px h-8 bg-border/60 mx-1 shrink-0" />
+
     <!-- Raise Hand Button -->
     <button
       @click="emit('toggle-raise-hand')"
-      class="flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all shadow-lg"
+      class="h-12 w-12 rounded-full border flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg cursor-pointer"
       :class="isHandRaised
-        ? 'bg-amber-500 border-amber-500 hover:bg-amber-600 text-white font-semibold shadow-amber-500/20'
+        ? 'bg-primary border-primary text-white shadow-primary/30'
         : 'bg-card hover:bg-card/80 text-foreground border-border'"
-      title="Angkat atau turunkan tangan"
     >
-      <span class="text-sm">🙋</span>
-      <span class="text-xs font-semibold hidden md:inline">
+      <span class="text-lg">✋</span>
+      
+      <!-- Quasar Tooltip (Discord Style) -->
+      <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]" class="bg-card text-foreground border border-border shadow-xl text-xs font-semibold rounded-lg px-2.5 py-1.5 backdrop-blur-md">
         {{ isHandRaised ? 'Turunkan Tangan' : 'Angkat Tangan' }}
-      </span>
+      </q-tooltip>
     </button>
 
     <!-- Emoji Reactions Popover Button -->
     <div class="relative">
       <button
         @click="showReactions = !showReactions"
-        class="flex items-center gap-2 px-4 py-2.5 rounded-xl border bg-card hover:bg-card/80 text-foreground transition-all shadow-lg"
-        :class="showReactions ? 'border-primary bg-primary/10 text-primary' : 'border-border'"
-        title="Kirim emoji reaksi ke peserta lain"
+        class="h-12 w-12 rounded-full border flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg cursor-pointer"
+        :class="showReactions ? 'border-primary bg-primary/10 text-primary' : 'bg-card hover:bg-card/80 text-foreground border-border'"
       >
-        <Smile class="h-4 w-4" />
-        <span class="text-xs font-semibold hidden md:inline">Reaksi</span>
+        <Smile class="h-5 w-5" />
+        
+        <!-- Quasar Tooltip (Discord Style) -->
+        <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]" class="bg-card text-foreground border border-border shadow-xl text-xs font-semibold rounded-lg px-2.5 py-1.5 backdrop-blur-md">
+          Reaksi Emoji
+        </q-tooltip>
       </button>
       
       <!-- Reaction Emojis Grid -->
       <Transition name="fade">
         <div
           v-if="showReactions"
-          class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-card border border-border rounded-2xl p-2.5 shadow-2xl flex items-center gap-1.5 z-30 backdrop-blur-xl"
+          class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-card border border-border rounded-2xl p-2.5 shadow-2xl flex items-center gap-1.5 z-30 backdrop-blur-xl animate-none"
         >
           <button
             v-for="emoji in ['💖', '👍', '👏', '😂', '🎉', '😮']"
             :key="emoji"
             @click="handleReaction(emoji)"
-            class="h-9 w-9 text-2xl hover:scale-125 transition-transform flex items-center justify-center rounded-lg hover:bg-white/5 active:scale-90"
+            class="h-9 w-9 text-2xl hover:scale-125 transition-transform flex items-center justify-center rounded-lg hover:bg-white/5 active:scale-90 cursor-pointer"
           >
             {{ emoji }}
           </button>
@@ -76,62 +83,50 @@
       </Transition>
     </div>
 
-    <!-- Recording Button (Host Only) -->
+    <!-- Host Controls / Toggle Participants (Host Only) -->
     <button
       v-if="isHost"
-      @click="emit('toggle-recording')"
-      class="flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all shadow-lg"
-      :class="isRecording
-        ? 'bg-destructive border-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold animate-pulse shadow-destructive/20'
+      @click="emit('toggle-participants')"
+      class="h-12 w-12 rounded-full border flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg cursor-pointer"
+      :class="showParticipants
+        ? 'border-primary bg-primary/10 text-primary'
         : 'bg-card hover:bg-card/80 text-foreground border-border'"
-      title="Mulai/Hentikan Rekam Meeting"
     >
-      <div class="h-2 w-2 rounded-full bg-destructive" :class="{ 'bg-white animate-ping': isRecording }" />
-      <span class="text-xs font-semibold hidden md:inline">
-        {{ isRecording ? 'Hentikan Rekam' : 'Rekam' }}
-      </span>
+      <Shield class="h-5 w-5" />
+      
+      <!-- Quasar Tooltip (Discord Style) -->
+      <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]" class="bg-card text-foreground border border-border shadow-xl text-xs font-semibold rounded-lg px-2.5 py-1.5 backdrop-blur-md">
+        Daftar Peserta (Host)
+      </q-tooltip>
     </button>
 
-    <!-- Mute All & Lower Hands Dropdown (Host Only) -->
-    <div v-if="isHost" class="relative group hidden sm:block">
-      <button
-        class="flex items-center gap-2 px-4 py-2.5 rounded-xl border bg-card hover:bg-card/80 text-foreground border-border transition-all shadow-lg"
-        title="Kontrol Host"
-      >
-        <Shield class="h-4 w-4 text-primary" />
-        <span class="text-xs font-semibold hidden md:inline">Host</span>
-      </button>
+    <!-- Settings Button (Open Media Options) -->
+    <button
+      @click="emit('open-settings')"
+      class="h-12 w-12 rounded-full border border-border flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg cursor-pointer bg-card hover:bg-card/80 text-foreground"
+    >
+      <Settings class="h-5 w-5" />
       
-      <!-- Dropdown Menu -->
-      <div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-card border border-border rounded-xl p-2 shadow-2xl flex flex-col gap-1 z-30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all w-48 backdrop-blur-xl">
-        <button
-          @click="emit('mute-all')"
-          class="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors text-xs font-medium w-full text-left"
-        >
-          <MicOff class="h-4 w-4" />
-          Bisukan Semua
-        </button>
-        <button
-          @click="emit('lower-all-hands')"
-          class="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-amber-500/10 text-amber-500 transition-colors text-xs font-medium w-full text-left"
-        >
-          <span class="text-base">🤚</span>
-          Turunkan Semua Tangan
-        </button>
-      </div>
-    </div>
+      <!-- Quasar Tooltip (Discord Style) -->
+      <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]" class="bg-card text-foreground border border-border shadow-xl text-xs font-semibold rounded-lg px-2.5 py-1.5 backdrop-blur-md">
+        Pengaturan Media
+      </q-tooltip>
+    </button>
 
-    <!-- Spacer -->
-    <div class="hidden sm:block w-px h-8 bg-border mx-1 sm:mx-2" />
+    <!-- Divider Spacer -->
+    <div class="w-px h-8 bg-border/60 mx-1 shrink-0" />
 
     <!-- Leave Button -->
     <button
       @click="emit('leave')"
-      class="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold text-sm transition-all shadow-lg shadow-destructive/20"
-      title="Tinggalkan Meeting"
+      class="h-12 w-12 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg shadow-destructive/20 cursor-pointer"
     >
-      <PhoneOff class="h-4 w-4" />
-      <span class="hidden sm:inline">Tinggalkan</span>
+      <PhoneOff class="h-5 w-5" />
+      
+      <!-- Quasar Tooltip (Discord Style) -->
+      <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]" class="bg-card text-foreground border border-border shadow-xl text-xs font-semibold rounded-lg px-2.5 py-1.5 backdrop-blur-md">
+        Tinggalkan Rapat
+      </q-tooltip>
     </button>
   </div>
 </template>
@@ -140,7 +135,7 @@
 import { ref } from 'vue'
 import {
   Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff,
-  PhoneOff, Smile, Shield
+  PhoneOff, Smile, Shield, Settings
 } from 'lucide-vue-next'
 import ControlButton from '@/components/meet/ControlButton.vue'
 
@@ -150,12 +145,14 @@ const props = defineProps({
   isScreenSharing: Boolean,
   isHandRaised: Boolean,
   isHost: Boolean,
-  isRecording: Boolean
+  isRecording: Boolean,
+  showParticipants: Boolean
 })
 
 const emit = defineEmits([
   'toggle-mic', 'toggle-camera', 'toggle-screen-share', 'toggle-raise-hand',
-  'send-reaction', 'toggle-recording', 'mute-all', 'lower-all-hands', 'leave'
+  'send-reaction', 'toggle-recording', 'mute-all', 'lower-all-hands', 'leave',
+  'toggle-participants', 'open-settings'
 ])
 
 const showReactions = ref(false)

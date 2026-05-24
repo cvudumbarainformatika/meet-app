@@ -21,6 +21,7 @@ export const useMeetStore = defineStore('meet', () => {
   const isMicEnabled = ref(true)
   const isCameraEnabled = ref(true)
   const isScreenSharing = ref(false)
+  const cameraResolution = ref('h540') // default qHD (540p)
 
   // --- Participants ---
   const participants = ref([])
@@ -105,16 +106,20 @@ export const useMeetStore = defineStore('meet', () => {
     isScreenSharing.value = val
   }
 
+  function setCameraResolution(res) {
+    cameraResolution.value = res
+  }
+
   return {
     // State
     room, token, livekitUrl, isHost, currentSessionId,
-    connectionState, isMicEnabled, isCameraEnabled, isScreenSharing,
+    connectionState, isMicEnabled, isCameraEnabled, isScreenSharing, cameraResolution,
     participants, messages, raisedHands, isRecording, showParticipants, reactions,
     // Computed
     isConnected, participantCount,
     // Actions
     setRoom, clearRoom, setConnectionState, setSessionId, setParticipants,
-    addMessage, toggleMic, toggleCamera, setScreenSharing,
+    addMessage, toggleMic, toggleCamera, setScreenSharing, setCameraResolution,
     setHandRaised, setRecording,
   }
 }, {

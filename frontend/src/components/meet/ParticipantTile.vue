@@ -82,15 +82,15 @@
       <span class="text-primary-foreground text-[10px] font-medium">Fullscreen</span>
     </div>
 
-    <!-- Raise Hand Badge (🙋) -->
+    <!-- Raise Hand Badge (✋) -->
     <button
       v-if="participant.isHandRaised"
       @click.stop="isHost && !participant.isLocal ? $emit('lower-hand', participant.identity) : null"
-      class="absolute top-3 left-3 z-10 flex items-center justify-center bg-amber-500 text-white rounded-full shadow-lg shadow-amber-500/30 animate-bounce transition-all"
-      :class="(isHost && !participant.isLocal) ? 'hover:bg-amber-600 hover:scale-110 cursor-pointer h-9 w-9' : 'h-8 w-8 cursor-default'"
+      class="absolute top-3 left-3 z-10 flex items-center justify-center bg-primary text-white rounded-full shadow-lg shadow-primary/30 animate-bounce transition-all"
+      :class="(isHost && !participant.isLocal) ? 'hover:bg-primary hover:scale-110 cursor-pointer h-9 w-9' : 'h-8 w-8 cursor-default'"
       :title="(isHost && !participant.isLocal) ? 'Turunkan Tangan' : 'Sedang Angkat Tangan'"
     >
-      <span class="text-sm">🙋</span>
+      <span class="text-sm">✋</span>
     </button>
 
     <!-- Overlay Info -->
