@@ -170,62 +170,78 @@
           <div class="sticky top-6">
             <h4 class="text-xs font-bold text-muted-foreground/90 uppercase tracking-wider mb-3 text-left">Live Preview Tema</h4>
             
-            <!-- Simulasi Layar Aplikasi Mini -->
+            <!-- Simulasi Layar Aplikasi Mini (Win11 Dock Style) -->
             <div 
-              class="w-full aspect-[4/3] rounded-3xl border border-white/10 overflow-hidden flex shadow-2xl relative transition-all duration-300"
+              class="w-full aspect-[4/3] rounded-3xl border border-white/10 overflow-hidden flex flex-col shadow-2xl relative transition-all duration-300"
               :class="{'theme-light': form.theme_mode === 'light'}"
               :style="{ backgroundColor: form.background_color }"
             >
-              <!-- 1. Mini Sidebar -->
-              <div 
-                class="w-1/3 h-full border-r border-white/5 flex flex-col justify-between p-2.5 transition-all duration-300 select-none"
-                :style="{ backgroundColor: form.sidebar_color }"
-              >
-                <div>
-                  <div class="flex items-center gap-1 mb-4">
-                    <div class="h-4 w-4 rounded bg-primary/20 flex items-center justify-center scale-90">
-                      <Sparkles class="h-2.5 w-2.5 text-primary" :style="{ color: form.primary_color }" />
-                    </div>
-                    <span class="text-[8px] font-black text-foreground uppercase tracking-tight truncate leading-none">
-                      {{ form.app_name }}
-                    </span>
-                  </div>
-                  <!-- Simulasi Menu Saluran -->
-                  <div class="space-y-1">
-                    <div class="h-4 rounded bg-primary/15 flex items-center px-1.5 gap-1 select-none" :style="{ backgroundColor: form.primary_color + '26' }">
-                      <span class="text-[8px] font-bold text-primary" :style="{ color: form.primary_color }"># lobi-utama</span>
-                    </div>
-                    <div class="h-4 rounded hover:bg-white/5 flex items-center px-1.5 gap-1 select-none">
-                      <span class="text-[8px] text-muted-foreground"># riwayat-rapat</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Mini Profil -->
-                <div class="h-7 bg-black/10 rounded-lg flex items-center justify-between p-1 select-none">
-                  <div class="flex items-center gap-1">
-                    <div class="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center text-[7px] font-bold uppercase text-primary" :style="{ backgroundColor: form.primary_color + '33', color: form.primary_color }">H</div>
-                    <span class="text-[6px] font-bold text-foreground truncate max-w-[30px]">Hariyadi</span>
-                  </div>
-                  <LogOut class="h-2.5 w-2.5 text-muted-foreground scale-80" />
-                </div>
-              </div>
-
-              <!-- 2. Mini Content Area -->
-              <div class="flex-1 h-full p-4 flex flex-col justify-center items-center">
+              <!-- Area Konten Utama -->
+              <div class="flex-1 flex items-center justify-center p-4">
                 <div 
                   class="w-full max-w-[160px] p-3 rounded-2xl border border-white/5 shadow-xl transition-all duration-300"
                   :style="{ backgroundColor: form.card_color }"
                 >
-                  <div class="h-2 w-12 rounded bg-muted-foreground/30 mb-2 mx-auto"></div>
-                  <div class="h-1.5 w-20 rounded bg-muted-foreground/20 mb-3 mx-auto"></div>
+                  <!-- App Name -->
+                  <div class="flex items-center gap-1 mb-2">
+                    <div class="h-3 w-3 rounded bg-primary/20 flex items-center justify-center" :style="{ backgroundColor: form.primary_color + '33' }">
+                      <Sparkles class="h-2 w-2" :style="{ color: form.primary_color }" />
+                    </div>
+                    <span class="text-[7px] font-black text-foreground uppercase truncate leading-none">{{ form.app_name }}</span>
+                  </div>
+                  <div class="h-1.5 w-20 rounded bg-muted-foreground/20 mb-2 mx-auto"></div>
                   <!-- Simulasi Tombol Primer -->
                   <div 
-                    class="h-5 w-full rounded-lg bg-primary flex items-center justify-center text-[7px] font-extrabold text-primary-foreground shadow-sm transition-all duration-300"
-                    :style="{ backgroundColor: form.primary_color }"
+                    class="h-5 w-full rounded-lg flex items-center justify-center text-[7px] font-extrabold shadow-sm transition-all duration-300"
+                    :style="{ backgroundColor: form.primary_color, color: '#fff' }"
                   >
                     Gabung Rapat
                   </div>
+                </div>
+              </div>
+
+              <!-- Mini Bottom Bar (Win11 Style) -->
+              <div class="shrink-0 pb-2 px-2 flex items-end justify-between">
+                <!-- Mini Profile Card (kiri) -->
+                <div 
+                  class="flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-sm"
+                  :style="{ backgroundColor: form.card_color + 'dd' }"
+                >
+                  <div class="h-4 w-4 rounded-full flex items-center justify-center text-[6px] font-bold relative" :style="{ backgroundColor: form.primary_color + '33', color: form.primary_color }">
+                    H
+                    <div class="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-green-500 border border-card"></div>
+                  </div>
+                  <span class="text-[6px] font-bold text-foreground">Hariyadi</span>
+                </div>
+
+                <!-- Mini Floating Dock (tengah) -->
+                <div 
+                  class="flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-sm"
+                  :style="{ backgroundColor: form.card_color + 'ee' }"
+                >
+                  <div class="flex flex-col items-center gap-0.5">
+                    <div class="h-3 w-3 rounded-md flex items-center justify-center" :style="{ backgroundColor: form.primary_color + '22' }">
+                      <div class="h-1.5 w-1.5 rounded-sm" :style="{ backgroundColor: form.primary_color }"></div>
+                    </div>
+                    <div class="h-0.5 w-0.5 rounded-full" :style="{ backgroundColor: form.primary_color }"></div>
+                  </div>
+                  <div class="flex flex-col items-center gap-0.5">
+                    <div class="h-3 w-3 rounded-md flex items-center justify-center bg-muted/30"><div class="h-1.5 w-1.5 rounded-sm bg-muted-foreground/40"></div></div>
+                  </div>
+                  <div class="flex flex-col items-center gap-0.5">
+                    <div class="h-3 w-3 rounded-md flex items-center justify-center bg-muted/30"><div class="h-1.5 w-1.5 rounded-sm bg-muted-foreground/40"></div></div>
+                  </div>
+                </div>
+
+                <!-- Mini Controls (kanan) -->
+                <div 
+                  class="flex items-center gap-1 px-2 py-1.5 rounded-xl shadow-sm"
+                  :style="{ backgroundColor: form.card_color + 'dd' }"
+                >
+                  <div class="h-3 w-3 rounded-md bg-destructive/20 flex items-center justify-center">
+                    <div class="h-1 w-0.5 rounded bg-destructive/60"></div>
+                  </div>
+                  <div class="h-3 w-3 rounded-md bg-muted/30"></div>
                 </div>
               </div>
             </div>
