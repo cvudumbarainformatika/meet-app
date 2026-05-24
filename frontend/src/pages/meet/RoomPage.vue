@@ -2,18 +2,19 @@
   <!-- =========================================================
     RoomPage — Halaman meeting video call
     Layout: Video grid fullscreen + sidebar chat + control bar
+    Refactored to Modular Clean Architecture
   ========================================================= -->
-  <div class="h-screen bg-slate-950 flex flex-col overflow-hidden">
+  <div class="h-screen bg-background flex flex-col overflow-hidden text-foreground">
 
     <!-- ── Header Bar ── -->
-    <div class="flex flex-wrap items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-slate-900/80 border-b border-white/5 flex-shrink-0 gap-2">
+    <div class="flex flex-wrap items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-card/80 border-b border-border flex-shrink-0 gap-2">
       <div class="flex items-center gap-2 sm:gap-3">
-        <div class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-indigo-600/20 flex items-center justify-center flex-shrink-0">
-          <Video class="h-4 w-4 text-indigo-400" />
+        <div class="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+          <Video class="h-4 w-4 text-primary" />
         </div>
         <div>
-          <h1 class="text-white text-sm font-semibold leading-none">{{ meetStore.room?.name ?? 'Meeting' }}</h1>
-          <span class="text-slate-500 text-xs">{{ meetStore.participantCount }} peserta</span>
+          <h1 class="text-foreground text-sm font-semibold leading-none">{{ meetStore.room?.name ?? 'Meeting' }}</h1>
+          <span class="text-muted-foreground text-xs">{{ meetStore.participantCount }} peserta</span>
         </div>
       </div>
 
@@ -22,15 +23,15 @@
         <!-- REC Blinking Indicator -->
         <div
           v-if="meetStore.isRecording"
-          class="flex items-center gap-1.5 bg-red-500/10 border border-red-500/25 px-2.5 py-1 rounded-full text-red-500 text-xs font-semibold animate-pulse"
+          class="flex items-center gap-1.5 bg-destructive/10 border border-destructive/25 px-2.5 py-1 rounded-full text-destructive text-xs font-semibold animate-pulse"
         >
-          <span class="h-1.5 w-1.5 rounded-full bg-red-500 animate-ping"></span>
+          <span class="h-1.5 w-1.5 rounded-full bg-destructive animate-ping"></span>
           <span>REC {{ formatDuration(recordingDuration) }}</span>
         </div>
         
         <!-- Meeting Timer -->
-        <div class="flex items-center gap-1.5 bg-white/5 border border-white/5 px-2.5 py-1 rounded-full text-slate-400 text-xs font-medium">
-          <Clock class="h-3.5 w-3.5 text-indigo-400" />
+        <div class="flex items-center gap-1.5 bg-white/5 border border-border px-2.5 py-1 rounded-full text-muted-foreground text-xs font-medium">
+          <Clock class="h-3.5 w-3.5 text-primary" />
           <span>{{ formatDuration(meetingDuration) }}</span>
         </div>
       </div>
@@ -39,7 +40,7 @@
         <!-- Copy link -->
         <button
           @click="copyRoomLink"
-          class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs transition-all"
+          class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground text-xs transition-all"
           title="Bagikan"
         >
           <Copy class="h-3.5 w-3.5" />
@@ -55,8 +56,8 @@
         <!-- Toggle participants list -->
         <button
           @click="toggleParticipantsPanel"
-          class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs transition-all"
-          :class="{ 'bg-indigo-600/20 text-indigo-400': meetStore.showParticipants }"
+          class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground text-xs transition-all"
+          :class="{ 'bg-primary/20 text-primary': meetStore.showParticipants }"
           title="Peserta"
         >
           <Users class="h-3.5 w-3.5" />
@@ -66,13 +67,13 @@
         <!-- Toggle chat -->
         <button
           @click="showChat = !showChat"
-          class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs transition-all"
-          :class="{ 'bg-indigo-600/20 text-indigo-400': showChat }"
+          class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground text-xs transition-all"
+          :class="{ 'bg-primary/20 text-primary': showChat }"
           title="Chat"
         >
           <MessageSquare class="h-3.5 w-3.5" />
           <span class="hidden sm:inline">Chat</span>
-          <span v-if="unreadCount > 0" class="bg-red-500 text-white text-[9px] rounded-full px-1.5 py-0.5 ml-0.5">
+          <span v-if="unreadCount > 0" class="bg-destructive text-destructive-foreground text-[9px] rounded-full px-1.5 py-0.5 ml-0.5">
             {{ unreadCount }}
           </span>
         </button>
@@ -89,15 +90,15 @@
           v-if="!meetStore.isConnected"
           class="flex-1 flex flex-col items-center justify-center text-center"
         >
-          <div class="h-16 w-16 rounded-2xl bg-indigo-600/20 flex items-center justify-center mb-4 animate-pulse">
-            <Video class="h-8 w-8 text-indigo-400" />
+          <div class="h-16 w-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-4 animate-pulse">
+            <Video class="h-8 w-8 text-primary" />
           </div>
-          <p class="text-white font-semibold mb-1">{{ meetStore.connectionState === 'connecting' ? 'Menghubungkan...' : 'Terputus' }}</p>
-          <p class="text-slate-500 text-sm">Mohon tunggu sebentar</p>
+          <p class="text-foreground font-semibold mb-1">{{ meetStore.connectionState === 'connecting' ? 'Menghubungkan...' : 'Terputus' }}</p>
+          <p class="text-muted-foreground text-sm">Mohon tunggu sebentar</p>
           <button
             v-if="meetStore.connectionState === 'disconnected' && connectionAttempted"
             @click="reconnect"
-            class="mt-4 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm"
+            class="mt-4 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors"
           >
             Coba Lagi
           </button>
@@ -167,7 +168,7 @@
                     :key="p.identity"
                     :participant="p"
                     :is-pinned="false"
-                    class="aspect-video shadow-lg rounded-xl overflow-hidden transition-all duration-300"
+                    class="aspect-video shadow-lg rounded-xl overflow-hidden transition-all duration-300 bg-card border border-border"
                     :style="getTileStyle(paginatedParticipants.length)"
                     @pin="pinnedId = p.identity"
                   />
@@ -189,216 +190,29 @@
         </div>
       </div>
 
-      <!-- Chat Overlay (floating di atas video, bukan mendorong) -->
-      <Transition name="slide-chat">
-        <div
-          v-if="showChat"
-          class="absolute top-0 right-0 bottom-0 w-[420px] max-w-full flex flex-col z-20 transition-all duration-300"
-          :style="chatSolid
-            ? 'background: rgb(10,15,30); border-left: 1px solid rgba(255,255,255,0.08);'
-            : 'background: rgba(15,23,42,0.85); backdrop-filter: blur(20px); border-left: 1px solid rgba(255,255,255,0.08);'"
-        >
-          <!-- Header Chat -->
-          <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between flex-shrink-0">
-            <div class="flex items-center gap-2">
-              <MessageSquare class="h-4 w-4 text-indigo-400" />
-              <h3 class="text-white text-sm font-semibold">Chat</h3>
-              <span v-if="meetStore.messages.length > 0" class="text-slate-500 text-xs">({{ meetStore.messages.length }})</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <!-- Toggle Blur/Solid -->
-              <button
-                @click="chatSolid = !chatSolid"
-                :title="chatSolid ? 'Aktifkan Blur' : 'Matikan Blur (Solid)'"
-                class="h-7 w-7 flex items-center justify-center rounded-lg transition-all"
-                :class="chatSolid ? 'bg-indigo-600/30 text-indigo-400' : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white'"
-              >
-                <Layers2 class="h-3.5 w-3.5" />
-              </button>
-              <!-- Close -->
-              <button
-                @click="showChat = false"
-                class="h-7 w-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
-              >
-                <X class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <!-- Messages -->
-          <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div v-if="meetStore.messages.length === 0" class="flex flex-col items-center justify-center h-full text-center pb-8">
-              <MessageSquare class="h-8 w-8 text-slate-700 mb-2" />
-              <p class="text-slate-600 text-xs">Belum ada pesan</p>
-            </div>
-            <div
-              v-for="msg in meetStore.messages"
-              :key="msg.id"
-              :class="msg.isSelf ? 'items-end' : 'items-start'"
-              class="flex flex-col"
-            >
-              <span class="text-slate-500 text-[10px] mb-1 px-1">{{ msg.sender }}</span>
-              <div
-                :class="msg.isSelf
-                  ? 'bg-indigo-600 text-white rounded-tl-2xl rounded-tr-sm rounded-bl-2xl'
-                  : 'bg-white/10 text-slate-200 rounded-tr-2xl rounded-tl-sm rounded-br-2xl'"
-                class="max-w-[85%] px-4 py-2.5 text-sm leading-relaxed"
-              >
-                {{ msg.text }}
-              </div>
-              <span class="text-slate-600 text-[9px] mt-1 px-1">
-                {{ formatTime(msg.timestamp) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Input -->
-          <div class="p-4 border-t border-white/5 flex-shrink-0">
-            <div class="flex items-center gap-2 bg-white/5 hover:bg-white/8 rounded-xl px-4 py-2.5 transition-colors border border-white/5 focus-within:border-indigo-500/40">
-              <input
-                v-model="chatInput"
-                @keyup.enter="sendChat"
-                type="text"
-                placeholder="Ketik pesan..."
-                class="flex-1 bg-transparent text-white text-sm placeholder-slate-500 outline-none"
-              />
-              <button
-                @click="sendChat"
-                :disabled="!chatInput.trim()"
-                class="h-7 w-7 flex items-center justify-center rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-all flex-shrink-0"
-              >
-                <Send class="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
+      <!-- Chat Overlay -->
+      <RoomChat
+        :show="showChat"
+        v-model:solid="chatSolid"
+        :messages="meetStore.messages"
+        @close="showChat = false"
+        @send="sendChat"
+      />
 
       <!-- Panel Daftar Peserta Overlay -->
-      <Transition name="slide-chat">
-        <div
-          v-if="meetStore.showParticipants"
-          class="absolute top-0 right-0 bottom-0 w-[420px] max-w-full flex flex-col z-20 transition-all duration-300"
-          :style="chatSolid
-            ? 'background: rgb(10,15,30); border-left: 1px solid rgba(255,255,255,0.08);'
-            : 'background: rgba(15,23,42,0.85); backdrop-filter: blur(20px); border-left: 1px solid rgba(255,255,255,0.08);'"
-        >
-          <!-- Header Panel -->
-          <div class="px-5 py-4 border-b border-white/5 flex items-center justify-between flex-shrink-0">
-            <div class="flex items-center gap-2">
-              <Users class="h-4 w-4 text-indigo-400" />
-              <h3 class="text-white text-sm font-semibold">Peserta</h3>
-              <span class="text-slate-500 text-xs">({{ meetStore.participants.length }})</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <!-- Close -->
-              <button
-                @click="meetStore.showParticipants = false"
-                class="h-7 w-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all"
-              >
-                <X class="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          <!-- Search Bar -->
-          <div class="p-4 border-b border-white/5 flex-shrink-0">
-            <div class="flex items-center gap-2 bg-white/5 rounded-xl px-3 py-2 border border-white/5">
-              <Search class="h-4 w-4 text-slate-500" />
-              <input
-                v-model="participantSearch"
-                type="text"
-                placeholder="Cari peserta..."
-                class="bg-transparent text-white text-xs outline-none flex-1 placeholder-slate-500"
-              />
-            </div>
-          </div>
-
-          <!-- Participants List -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-3">
-            <div
-              v-for="p in filteredParticipants"
-              :key="p.identity"
-              class="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5 group"
-            >
-              <div class="flex items-center gap-2.5 min-w-0">
-                <!-- Avatar -->
-                <div class="h-8 w-8 rounded-full bg-indigo-600/30 flex items-center justify-center text-white text-xs font-semibold uppercase">
-                  {{ p.name ? p.name.substring(0, 2) : '?' }}
-                </div>
-                <!-- Name + Roles -->
-                <div class="flex flex-col min-w-0">
-                  <span class="text-slate-200 text-xs font-medium truncate">
-                    {{ p.name || p.identity }}
-                    <span v-if="p.isLocal" class="text-slate-400 text-[10px] font-normal"> (Anda)</span>
-                  </span>
-                  <!-- Badge host / raise hand -->
-                  <div class="flex items-center gap-1.5 mt-0.5">
-                    <span v-if="p.isLocal && meetStore.isHost" class="text-[9px] font-medium bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">Host</span>
-                    <span v-else-if="!p.isLocal && p.identity === meetStore.room?.host_name" class="text-[9px] font-medium bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">Host</span>
-                    <span v-if="p.isHandRaised" class="text-[9px] font-medium bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                      <span>🙋</span> Angkat Tangan
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Participant Actions / Status -->
-              <div class="flex items-center gap-2">
-                <!-- Lower Hand button (only visible to Host for remote users when hand is raised) -->
-                <button
-                  v-if="meetStore.isHost && !p.isLocal && p.isHandRaised"
-                  @click="lowerRemoteHand(p.identity)"
-                  class="h-6 w-6 rounded-lg bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 flex items-center justify-center transition-all mr-1"
-                  title="Turunkan Tangan"
-                >
-                  <span class="text-xs">🤚</span>
-                </button>
-
-                <!-- Mute button (only visible to Host for remote users) -->
-                <button
-                  v-if="meetStore.isHost && !p.isLocal"
-                  @click="muteRemoteParticipant(p.identity)"
-                  class="h-6 w-6 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
-                  title="Matikan Mikrofon"
-                >
-                  <MicOff class="h-3.5 w-3.5" />
-                </button>
-
-                <!-- Status Icons (Mic/Cam) -->
-                <div class="flex items-center gap-1">
-                  <Mic v-if="p.isMicEnabled" class="h-3.5 w-3.5 text-slate-400" />
-                  <MicOff v-else class="h-3.5 w-3.5 text-red-500/80" />
-                  
-                  <Video v-if="p.isCameraEnabled" class="h-3.5 w-3.5 text-slate-400" />
-                  <VideoOff v-else class="h-3.5 w-3.5 text-slate-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Bottom Host Action (Mute All) -->
-          <div
-            v-if="meetStore.isHost"
-            class="p-4 border-t border-white/5 flex-shrink-0 bg-slate-900/50"
-          >
-            <button
-              @click="muteAllParticipants"
-              class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 hover:border-transparent text-xs font-semibold transition-all mb-2"
-            >
-              <MicOff class="h-4 w-4" />
-              Bisukan Semua Peserta
-            </button>
-            <button
-              @click="lowerAllHands"
-              class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-500/30 hover:border-transparent text-xs font-semibold transition-all"
-            >
-              <span class="text-sm">🤚</span>
-              Turunkan Semua Tangan
-            </button>
-          </div>
-        </div>
-      </Transition>
+      <RoomParticipants
+        :show="meetStore.showParticipants"
+        :solid="chatSolid"
+        :participants="meetStore.participants"
+        :is-host="meetStore.isHost"
+        :host-name="meetStore.room?.host_name"
+        v-model:search="participantSearch"
+        @close="meetStore.showParticipants = false"
+        @lower-hand="lowerRemoteHand"
+        @mute="muteRemoteParticipant"
+        @mute-all="muteAllParticipants"
+        @lower-all-hands="lowerAllHands"
+      />
 
       <!-- Floating Emoji Reactions container -->
       <div class="fixed bottom-24 left-6 z-50 pointer-events-none flex flex-col gap-2">
@@ -406,10 +220,10 @@
           <div
             v-for="reaction in meetStore.reactions"
             :key="reaction.id"
-            class="flex items-center gap-2 bg-slate-900/90 border border-white/10 rounded-full px-3 py-1.5 shadow-xl backdrop-blur-md animate-reaction-float"
+            class="flex items-center gap-2 bg-card/90 border border-border rounded-full px-3 py-1.5 shadow-xl backdrop-blur-md animate-reaction-float"
           >
             <span class="text-xl">{{ reaction.emoji }}</span>
-            <span class="text-white text-[10px] font-medium pr-1">{{ reaction.sender }}</span>
+            <span class="text-foreground text-[10px] font-medium pr-1">{{ reaction.sender }}</span>
           </div>
         </TransitionGroup>
       </div>
@@ -417,157 +231,39 @@
 
 
     <!-- ── Control Bar ── -->
-    <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-2 sm:px-6 py-2 sm:py-4 bg-slate-900/80 border-t border-white/5 flex-shrink-0 z-20">
-
-      <!-- Mic -->
-      <ControlButton
-        :active="meetStore.isMicEnabled"
-        :icon-on="Mic"
-        :icon-off="MicOff"
-        label="Mikrofon"
-        color="default"
-        @toggle="roomComposable.toggleMic"
-      />
-
-      <!-- Camera -->
-      <ControlButton
-        :active="meetStore.isCameraEnabled"
-        :icon-on="Camera"
-        :icon-off="CameraOff"
-        label="Kamera"
-        color="default"
-        @toggle="roomComposable.toggleCamera"
-      />
-
-      <!-- Screen Share -->
-      <ControlButton
-        :active="!meetStore.isScreenSharing"
-        :icon-on="Monitor"
-        :icon-off="MonitorOff"
-        label="Screen Share"
-        color="blue"
-        @toggle="roomComposable.toggleScreenShare"
-      />
-
-      <!-- Raise Hand Button -->
-      <button
-        @click="toggleRaiseHand"
-        class="flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all shadow-lg"
-        :class="myHandRaised
-          ? 'bg-amber-600 border-amber-500 hover:bg-amber-500 text-white font-semibold shadow-amber-600/20'
-          : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border-white/5'"
-        title="Angkat atau turunkan tangan"
-      >
-        <span class="text-sm">🙋</span>
-        <span class="text-xs font-semibold hidden md:inline">
-          {{ myHandRaised ? 'Turunkan Tangan' : 'Angkat Tangan' }}
-        </span>
-      </button>
-
-      <!-- Emoji Reactions Popover Button -->
-      <div class="relative">
-        <button
-          @click="showReactions = !showReactions"
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white transition-all shadow-lg"
-          :class="showReactions ? 'border-indigo-500 bg-indigo-600/10 text-indigo-400' : 'border-white/5'"
-          title="Kirim emoji reaksi ke peserta lain"
-        >
-          <Smile class="h-4 w-4" />
-          <span class="text-xs font-semibold hidden md:inline">Reaksi</span>
-        </button>
-        
-        <!-- Reaction Emojis Grid -->
-        <Transition name="fade">
-          <div
-            v-if="showReactions"
-            class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 bg-slate-900 border border-white/10 rounded-2xl p-2.5 shadow-2xl flex items-center gap-1.5 z-30 backdrop-blur-xl"
-          >
-            <button
-              v-for="emoji in ['💖', '👍', '👏', '😂', '🎉', '😮']"
-              :key="emoji"
-              @click="sendReactionEmoji(emoji)"
-              class="h-9 w-9 text-2xl hover:scale-125 transition-transform flex items-center justify-center rounded-lg hover:bg-white/5 active:scale-90"
-            >
-              {{ emoji }}
-            </button>
-          </div>
-        </Transition>
-      </div>
-
-      <!-- Recording Button (Host Only) -->
-      <button
-        v-if="meetStore.isHost"
-        @click="toggleRecording"
-        class="flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all shadow-lg"
-        :class="meetStore.isRecording
-          ? 'bg-red-600 border-red-500 hover:bg-red-500 text-white font-semibold animate-pulse shadow-red-600/20'
-          : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border-white/5'"
-        title="Mulai/Hentikan Rekam Meeting"
-      >
-        <div class="h-2 w-2 rounded-full bg-red-500" :class="{ 'bg-white animate-ping': meetStore.isRecording }" />
-        <span class="text-xs font-semibold hidden md:inline">
-          {{ meetStore.isRecording ? 'Hentikan Rekam' : 'Rekam' }}
-        </span>
-      </button>
-
-      <!-- Mute All & Lower Hands Dropdown (Host Only) -->
-      <div v-if="meetStore.isHost" class="relative group hidden sm:block">
-        <button
-          class="flex items-center gap-2 px-4 py-2.5 rounded-xl border bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border-white/5 transition-all shadow-lg"
-          title="Kontrol Host"
-        >
-          <Shield class="h-4 w-4 text-indigo-400" />
-          <span class="text-xs font-semibold hidden md:inline">Host</span>
-        </button>
-        
-        <!-- Dropdown Menu -->
-        <div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-white/10 rounded-xl p-2 shadow-2xl flex flex-col gap-1 z-30 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all w-48 backdrop-blur-xl">
-          <button
-            @click="muteAllParticipants"
-            class="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors text-xs font-medium w-full text-left"
-          >
-            <MicOff class="h-4 w-4" />
-            Bisukan Semua
-          </button>
-          <button
-            @click="lowerAllHands"
-            class="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 transition-colors text-xs font-medium w-full text-left"
-          >
-            <span class="text-base">🤚</span>
-            Turunkan Semua Tangan
-          </button>
-        </div>
-      </div>
-
-      <!-- Spacer -->
-      <div class="hidden sm:block w-px h-8 bg-white/10 mx-1 sm:mx-2" />
-
-      <!-- Leave Button -->
-      <button
-        @click="leaveRoom"
-        class="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm transition-all shadow-lg shadow-red-600/20"
-        title="Tinggalkan Meeting"
-      >
-        <PhoneOff class="h-4 w-4" />
-        <span class="hidden sm:inline">Tinggalkan</span>
-      </button>
-    </div>
+    <RoomControlBar
+      :is-mic-enabled="meetStore.isMicEnabled"
+      :is-camera-enabled="meetStore.isCameraEnabled"
+      :is-screen-sharing="meetStore.isScreenSharing"
+      :is-hand-raised="myHandRaised"
+      :is-host="meetStore.isHost"
+      :is-recording="meetStore.isRecording"
+      @toggle-mic="roomComposable.toggleMic"
+      @toggle-camera="roomComposable.toggleCamera"
+      @toggle-screen-share="roomComposable.toggleScreenShare"
+      @toggle-raise-hand="toggleRaiseHand"
+      @send-reaction="sendReactionEmoji"
+      @toggle-recording="toggleRecording"
+      @mute-all="muteAllParticipants"
+      @lower-all-hands="lowerAllHands"
+      @leave="leaveRoom"
+    />
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
-  Video, Copy, MessageSquare, X, Send, Mic, MicOff,
-  Camera, CameraOff, Monitor, MonitorOff, PhoneOff,
-  ChevronLeft, ChevronRight, Layers2, Users, Search, Smile, Clock, VideoOff, Shield
+  Video, Copy, MessageSquare, Clock, Users, ChevronLeft, ChevronRight
 } from 'lucide-vue-next'
 import { useMeetStore } from '@/stores/meet'
 import { useRoom } from '@/composables/useRoom'
 import ParticipantTile from '@/components/meet/ParticipantTile.vue'
-import ControlButton from '@/components/meet/ControlButton.vue'
+import RoomChat from '@/components/meet/RoomChat.vue'
+import RoomParticipants from '@/components/meet/RoomParticipants.vue'
+import RoomControlBar from '@/components/meet/RoomControlBar.vue'
 import { useNotificationStore } from '@/stores/notification'
 import { api as axios } from '@/boot/axios'
 
@@ -579,8 +275,6 @@ const roomComposable = useRoom()
 
 // --- State ---
 const showChat = ref(false)
-const chatInput = ref('')
-const messagesContainer = ref(null)
 const pinnedId = ref(null)
 const connectionAttempted = ref(false)
 const unreadCount = ref(0)
@@ -589,7 +283,6 @@ const chatSolid = ref(false)
 
 // --- State Profesional Tambahan ---
 const participantSearch = ref('')
-const showReactions = ref(false)
 const meetingDuration = ref(0)
 const recordingDuration = ref(0)
 let timerInterval = null
@@ -635,31 +328,28 @@ watch(() => unpinnedParticipants.value.length, () => {
 
 // --- Responsive Flexbox Gallery Layout (Discord/Meet Style) ---
 function getTileStyle(count) {
-  // Lebar menyesuaikan jumlah agar bisa bertingkat dan terpusat (center)
-  // Aspect ratio 16/9 dipertahankan oleh class 'aspect-video' di HTML
   if (count === 1) return { width: '100%', maxWidth: '1000px' }
-  if (count === 2) return { width: 'calc(50% - 0.5rem)', maxWidth: '800px' } // 2 sejajar
-  if (count === 3 || count === 4) return { width: 'calc(50% - 0.5rem)', maxWidth: '600px' } // 2 sejajar, otomatis baris ke-2 terpusat
-  if (count >= 5 && count <= 6) return { width: 'calc(33.333% - 0.66rem)', maxWidth: '500px' } // 3 sejajar
-  if (count >= 7 && count <= 8) return { width: 'calc(25% - 0.75rem)' } // 4 sejajar
+  if (count === 2) return { width: 'calc(50% - 0.5rem)', maxWidth: '800px' }
+  if (count === 3 || count === 4) return { width: 'calc(50% - 0.5rem)', maxWidth: '600px' }
+  if (count >= 5 && count <= 6) return { width: 'calc(33.333% - 0.66rem)', maxWidth: '500px' }
+  if (count >= 7 && count <= 8) return { width: 'calc(25% - 0.75rem)' }
   if (count >= 9 && count <= 12) return { width: 'calc(25% - 0.75rem)' } 
-  // 13+ peserta (Thumbnail mode)
-  return { width: 'calc(20% - 0.8rem)' } // 5 sejajar
+  return { width: 'calc(20% - 0.8rem)' }
 }
 
 // --- Connection Status ---
 const statusClass = computed(() => {
   const state = meetStore.connectionState
-  if (state === 'connected') return 'bg-emerald-500/10 text-emerald-400'
-  if (state === 'connecting' || state === 'reconnecting') return 'bg-amber-500/10 text-amber-400'
-  return 'bg-red-500/10 text-red-400'
+  if (state === 'connected') return 'bg-success/10 text-success'
+  if (state === 'connecting' || state === 'reconnecting') return 'bg-amber-500/10 text-amber-500'
+  return 'bg-destructive/10 text-destructive'
 })
 
 const statusDotClass = computed(() => {
   const state = meetStore.connectionState
-  if (state === 'connected') return 'bg-emerald-400 animate-pulse'
-  if (state === 'connecting' || state === 'reconnecting') return 'bg-amber-400 animate-pulse'
-  return 'bg-red-400'
+  if (state === 'connected') return 'bg-success animate-pulse'
+  if (state === 'connecting' || state === 'reconnecting') return 'bg-amber-500 animate-pulse'
+  return 'bg-destructive'
 })
 
 const statusText = computed(() => {
@@ -678,63 +368,76 @@ const myHandRaised = computed(() => {
   return localParticipant.value?.isHandRaised || false
 })
 
-const filteredParticipants = computed(() => {
-  if (!participantSearch.value.trim()) return meetStore.participants
-  const query = participantSearch.value.toLowerCase().trim()
-  return meetStore.participants.filter(p => {
-    const name = (p.name || p.identity || '').toLowerCase()
-    return name.includes(query)
-  })
-})
-
-// --- Connect & Timer saat halaman dibuka ---
+// --- Connect & Timer saat halaman dibuka (Ditambahkan logika restore token otomatis & delay transisi) ---
 onMounted(async () => {
-  // Pastikan ada token (dari store atau redirect dari lobby)
-  if (!meetStore.token || !meetStore.livekitUrl) {
-    notificationStore.showError('Gagal', 'Sesi room tidak ditemukan. Silakan join ulang.')
-    router.push('/')
-    return
-  }
-
-  connectionAttempted.value = true
-  try {
-    await roomComposable.connect(meetStore.livekitUrl, meetStore.token)
-    
-    // Mulai session di backend jika ini adalah host
-    if (meetStore.isHost && meetStore.room?.id) {
-      try {
-        const res = await axios.post('/api/meetings', { room_id: meetStore.room.id })
-        if (res.data.success && res.data.data) {
-          meetStore.setSessionId(res.data.data.id)
+  window.addEventListener('beforeunload', handleWindowUnload)
+  // Tunggu transisi halaman router selesai (0.3s) agar Vue Transition engine tidak mengalami DOM collision/blank screen
+  setTimeout(async () => {
+    // Jika token atau livekitUrl kosong (misal karena direct visit/reload), coba restore token secara dinamis
+    if (!meetStore.token || !meetStore.livekitUrl) {
+      const slug = route.params.slug
+      if (slug) {
+        try {
+          const res = await axios.post('/api/tokens/join', {
+            room_slug: slug.trim()
+          })
+          if (res.data.success) {
+            const publicLiveKitUrl = import.meta.env.VITE_LIVEKIT_URL || res.data.data.livekit_url
+            meetStore.setRoom(res.data.data.room, res.data.data.token, publicLiveKitUrl, res.data.data.is_host)
+          } else {
+            notificationStore.showError('Gagal', 'Gagal memulihkan sesi room.')
+            router.push(`/?join=${slug}`)
+            return
+          }
+        } catch (err) {
+          // Jika butuh password (403), lempar kembali ke lobi agar user bisa memasukkan password
+          if (err.response?.status === 403) {
+            notificationStore.showWarning('Perlu Password', 'Room ini dilindungi sandi. Silakan bergabung melalui lobi.')
+            router.push(`/?join=${slug}`)
+          } else {
+            notificationStore.showError('Gagal', err.response?.data?.message ?? 'Sesi room tidak ditemukan.')
+            router.push('/')
+          }
+          return
         }
-      } catch (err) {
-        console.error('Failed to start meeting session:', err)
+      } else {
+        router.push('/')
+        return
       }
     }
-  } catch (err) {
-    notificationStore.showError('Koneksi Gagal', `Gagal terhubung: ${err.message}`)
-  }
 
-  // Timer interval durasi meeting
-  timerInterval = setInterval(() => {
-    meetingDuration.value++
-    if (meetStore.isRecording) {
-      recordingDuration.value++
-    } else {
-      recordingDuration.value = 0
+    connectionAttempted.value = true
+    try {
+      await roomComposable.connect(meetStore.livekitUrl, meetStore.token)
+      
+      if (meetStore.isHost && meetStore.room?.id) {
+        try {
+          const res = await axios.post('/api/meetings', { room_id: meetStore.room.id })
+          if (res.data.success && res.data.data) {
+            meetStore.setSessionId(res.data.data.id)
+          }
+        } catch (err) {
+          console.error('Failed to start meeting session:', err)
+        }
+      }
+    } catch (err) {
+      notificationStore.showError('Koneksi Gagal', `Gagal terhubung: ${err.message}`)
     }
-  }, 1000)
+
+    timerInterval = setInterval(() => {
+      meetingDuration.value++
+      if (meetStore.isRecording) {
+        recordingDuration.value++
+      } else {
+        recordingDuration.value = 0
+      }
+    }, 1000)
+  }, 400)
 })
 
-// --- Auto scroll chat ke bawah ---
-watch(() => meetStore.messages.length, async () => {
+watch(() => meetStore.messages.length, () => {
   if (!showChat.value) {
     unreadCount.value++
-    return
-  }
-  await nextTick()
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
   }
 })
 
@@ -752,16 +455,13 @@ watch(() => meetStore.showParticipants, (val) => {
 })
 
 // --- Actions ---
-async function sendChat() {
-  if (!chatInput.value.trim()) return
-  await roomComposable.sendChatMessage(chatInput.value)
-  chatInput.value = ''
+async function sendChat(text) {
+  await roomComposable.sendChatMessage(text)
 }
 
 async function leaveRoom() {
   if (meetStore.isHost && meetStore.currentSessionId) {
     try {
-      // Akhiri sesi dan simpan participant_count saat host keluar
       await axios.put(`/api/meetings/${meetStore.currentSessionId}/end`, {
         participant_count: Math.max(1, meetStore.participantCount)
       })
@@ -783,12 +483,6 @@ function copyRoomLink() {
   notificationStore.showSuccess('Berhasil', 'Link room tersalin!')
 }
 
-function formatTime(date) {
-  if (!date) return ''
-  return new Date(date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-}
-
-// --- Actions Profesional Baru ---
 async function toggleRaiseHand() {
   const raised = !myHandRaised.value
   await roomComposable.sendRaiseHand(raised)
@@ -796,7 +490,6 @@ async function toggleRaiseHand() {
 
 async function sendReactionEmoji(emoji) {
   await roomComposable.sendReaction(emoji)
-  showReactions.value = false
 }
 
 async function toggleRecording() {
@@ -845,26 +538,37 @@ function formatDuration(totalSeconds) {
   return `${paddedMins}:${paddedSecs}`
 }
 
+function handleWindowUnload() {
+  if (meetStore.isHost && meetStore.currentSessionId) {
+    // Sinyal penutupan sesi rapat sinkron saat browser ditutup / di-reload
+    const url = `/api/meetings/${meetStore.currentSessionId}/end`
+    const payload = JSON.stringify({
+      participant_count: Math.max(1, meetStore.participantCount)
+    })
+    try {
+      navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }))
+    } catch (e) {
+      console.error('Failed to send unload beacon:', e)
+    }
+  }
+}
+
 onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleWindowUnload)
   if (timerInterval) clearInterval(timerInterval)
   if (meetStore.isConnected) {
+    if (meetStore.isHost && meetStore.currentSessionId) {
+      // Jika keluar rute secara internal SPA, akhiri sesi via Axios
+      axios.put(`/api/meetings/${meetStore.currentSessionId}/end`, {
+        participant_count: Math.max(1, meetStore.participantCount)
+      }).catch(err => console.error('Failed to end session on unmount:', err))
+    }
     roomComposable.disconnect()
   }
 })
 </script>
 
 <style scoped>
-.slide-chat-enter-active,
-.slide-chat-leave-active {
-  transition: all 0.25s ease;
-}
-
-.slide-chat-enter-from,
-.slide-chat-leave-to {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
 /* Tile pagination transition */
 .tile-fade-enter-active,
 .tile-fade-leave-active {
@@ -901,16 +605,5 @@ onBeforeUnmount(() => {
 
 .animate-reaction-float {
   animation: reaction-float 4s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
-}
-
-/* Fade Transition for Popover */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translate(-50%, 10px) scale(0.95);
 }
 </style>

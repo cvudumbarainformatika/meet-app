@@ -4,6 +4,13 @@
 </template>
 
 <script setup lang="ts">
-// Main app component - Quasar handles the routing
+import { onMounted } from 'vue'
+import { useSettingsStore } from '@/stores/settings'
 import Notification from '@/components/ui/Notification.vue'
+
+const settingsStore = useSettingsStore()
+
+onMounted(() => {
+  settingsStore.fetchGlobalSettings()
+})
 </script>

@@ -1,6 +1,7 @@
 import { route } from 'quasar/wrappers'
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
+import { useSettingsStore } from '@/stores/settings'
 
 export default route(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
@@ -14,6 +15,16 @@ export default route(function (/* { store, ssrContext } */) {
   })
 
   Router.beforeEach((to, from, next) => {
+    // Set dynamic document title berbasis appName database
+    const settingsStore = useSettingsStore()
+    const appName = settingsStore.appName || 'MeetApp'
+    
+    if (to.meta && to.meta.title) {
+      document.title = `${to.meta.title} — ${appName}`
+    } else {
+      document.title = appName
+    }
+
     // Gunakan meetapp_user karena kita sudah mengubah key di stores/auth.js
     const user = JSON.parse(localStorage.getItem('meetapp_user'))
 

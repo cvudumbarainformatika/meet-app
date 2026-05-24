@@ -6,7 +6,7 @@
     ref="tileEl"
     class="relative bg-black rounded-xl overflow-hidden group cursor-pointer border flex items-center justify-center"
     :class="[
-      (participant.isSpeaking || isSpeakingFast) ? 'speaking ring-2 ring-emerald-400 border-emerald-400 shadow-lg shadow-emerald-500/50 transition-none' : 'border-white/5 hover:border-indigo-500/30 transition-all duration-300',
+      (participant.isSpeaking || isSpeakingFast) ? 'speaking ring-2 ring-emerald-400 border-emerald-400 shadow-lg shadow-emerald-500/50 transition-none' : 'border-border hover:border-primary/50 transition-all duration-300',
     ]"
     @click="$emit('pin')"
   >
@@ -69,7 +69,7 @@
         @click.stop="$emit('pin')"
         :title="isPinned ? 'Lepas Pin' : 'Pin Video'"
         class="h-7 w-7 flex items-center justify-center rounded-lg transition-all"
-        :class="isPinned ? 'bg-indigo-600/80 hover:bg-indigo-600 text-white' : 'bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm'"
+        :class="isPinned ? 'bg-primary/80 hover:bg-primary text-primary-foreground' : 'bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm'"
       >
         <PinOff v-if="isPinned" class="h-3.5 w-3.5" />
         <Pin v-else class="h-3.5 w-3.5" />
@@ -77,9 +77,9 @@
     </div>
 
     <!-- Fullscreen indicator badge -->
-    <div v-if="isFullscreen" class="absolute top-2 left-2 z-10 flex items-center gap-1 bg-indigo-600/80 px-2 py-0.5 rounded-md backdrop-blur-sm">
-      <Maximize2 class="h-2.5 w-2.5 text-white" />
-      <span class="text-white text-[10px] font-medium">Fullscreen</span>
+    <div v-if="isFullscreen" class="absolute top-2 left-2 z-10 flex items-center gap-1 bg-primary/80 px-2 py-0.5 rounded-md backdrop-blur-sm">
+      <Maximize2 class="h-2.5 w-2.5 text-primary-foreground" />
+      <span class="text-primary-foreground text-[10px] font-medium">Fullscreen</span>
     </div>
 
     <!-- Raise Hand Badge (🙋) -->
@@ -105,10 +105,10 @@
           />
           <span class="text-white text-xs font-semibold truncate max-w-[120px]">
             {{ participant.name ?? participant.identity }}
-            <span v-if="participant.isLocal" class="text-slate-400 font-normal"> (Anda)</span>
+            <span v-if="participant.isLocal" class="text-white/70 font-normal"> (Anda)</span>
           </span>
           <!-- Host Badge -->
-          <span v-if="isHost" class="bg-indigo-600/80 text-white text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider ml-1">Host</span>
+          <span v-if="isHost" class="bg-primary text-primary-foreground text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider ml-1">Host</span>
         </div>
         <div class="flex items-center gap-1">
           <!-- Mic status -->
@@ -271,7 +271,7 @@ const initials = computed(() => {
 
 // Warna avatar berbeda per participant
 const avatarGradients = [
-  'from-indigo-900 to-indigo-700',
+  'from-blue-900 to-blue-700',
   'from-violet-900 to-violet-700',
   'from-emerald-900 to-emerald-700',
   'from-rose-900 to-rose-700',

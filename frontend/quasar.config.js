@@ -192,7 +192,7 @@ export default configure(function (ctx) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'e-rtlh-kota-probolinggo'
+        appId: 'meet-app'
       }
     },
 

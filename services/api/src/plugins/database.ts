@@ -5,6 +5,7 @@
 
 import fp from 'fastify-plugin'
 import fastifyPostgres from '@fastify/postgres'
+import bcrypt from 'bcryptjs'
 import { config } from '../config/env.js'
 
 const MIGRATION_SQL = `
@@ -73,6 +74,27 @@ DROP TRIGGER IF EXISTS update_meeting_sessions_updated_at ON meeting_sessions;
 CREATE TRIGGER update_meeting_sessions_updated_at
   BEFORE UPDATE ON meeting_sessions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- App Settings table
+CREATE TABLE IF NOT EXISTS app_settings (
+  id                INT PRIMARY KEY DEFAULT 1,
+  app_name          VARCHAR(255) NOT NULL DEFAULT 'MeetApp',
+  primary_color     VARCHAR(50) NOT NULL DEFAULT '#5865f2',
+  background_color  VARCHAR(50) NOT NULL DEFAULT '#313338',
+  sidebar_color     VARCHAR(50) NOT NULL DEFAULT '#1e1f22',
+  card_color        VARCHAR(50) NOT NULL DEFAULT '#2b2d31',
+  logo_url          TEXT,
+  theme_mode        VARCHAR(50) NOT NULL DEFAULT 'dark',
+  CONSTRAINT single_row CHECK (id = 1)
+);
+
+-- Ensure theme_mode column exists for older database migrations
+ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS theme_mode VARCHAR(50) NOT NULL DEFAULT 'dark';
+
+-- Seed default settings if not exists
+INSERT INTO app_settings (id, app_name, primary_color, background_color, sidebar_color, card_color, theme_mode)
+VALUES (1, 'MeetApp', '#5865f2', '#313338', '#1e1f22', '#2b2d31', 'dark')
+ON CONFLICT (id) DO NOTHING;
 `
 
 export default fp(async (fastify) => {
@@ -85,6 +107,19 @@ export default fp(async (fastify) => {
   try {
     await client.query(MIGRATION_SQL)
     fastify.log.info('✅ Database migration completed')
+
+    // Seed Owner Account (pharyyady@gmail.com / harry141312)
+    const ownerEmail = 'pharyyady@gmail.com'
+    const checkOwner = await client.query('SELECT id FROM users WHERE email = $1', [ownerEmail])
+    if (checkOwner.rows.length === 0) {
+      const passwordHash = await bcrypt.hash('harry141312', 12)
+      await client.query(
+        `INSERT INTO users (name, email, password_hash)
+         VALUES ($1, $2, $3)`,
+        ['Hariyadi', ownerEmail, passwordHash]
+      )
+      fastify.log.info('👤 Owner account (pharyyady@gmail.com) seeded successfully')
+    }
   } catch (err) {
     fastify.log.error('❌ Database migration failed:', err)
     throw err

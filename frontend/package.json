@@ -1,8 +1,8 @@
 {
-  "name": "e-rtlh-kota-probolinggo",
+  "name": "meet-app",
   "version": "1.0.0",
-  "description": "Quasar starter kit with Tailwind CSS and ShadCN-Vue",
-  "productName": "e-RTLH Kota Probolinggo",
+  "description": "Meet App",
+  "productName": "Meet App",
   "author": "MiniMax Agent",
   "private": true,
   "scripts": {

@@ -9,7 +9,7 @@
     >
       <component :is="active ? iconOn : iconOff" class="h-5 w-5" />
     </button>
-    <span class="text-slate-500 text-[10px] font-medium hidden sm:block">{{ label }}</span>
+    <span class="text-muted-foreground text-[10px] font-medium hidden sm:block">{{ label }}</span>
   </div>
 </template>
 
@@ -28,12 +28,12 @@ defineEmits(['toggle'])
 
 const buttonClass = computed(() => {
   if (!props.active) {
-    return 'bg-red-600/20 hover:bg-red-600/30 text-red-400 ring-1 ring-red-500/30'
+    return 'bg-destructive/20 hover:bg-destructive/30 text-destructive ring-1 ring-destructive/30'
   }
   const colorMap = {
-    default: 'bg-white/10 hover:bg-white/20 text-white',
+    default: 'bg-card hover:bg-card/80 text-foreground',
     blue: 'bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 ring-1 ring-blue-500/30',
-    red: 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/30',
+    red: 'bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-destructive/30',
   }
   return colorMap[props.color] ?? colorMap.default
 })

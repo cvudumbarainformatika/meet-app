@@ -14,6 +14,7 @@ import authRoutes from './modules/auth/auth.routes.js'
 import roomsRoutes from './modules/rooms/rooms.routes.js'
 import tokensRoutes from './modules/tokens/tokens.routes.js'
 import meetingsRoutes from './modules/meetings/meetings.routes.js'
+import settingsRoutes from './modules/settings/settings.routes.js'
 
 // =============================================================
 // Inisialisasi Fastify
@@ -61,6 +62,7 @@ await fastify.register(authRoutes, { prefix: '/api/auth' })
 await fastify.register(roomsRoutes, { prefix: '/api/rooms' })
 await fastify.register(tokensRoutes, { prefix: '/api/tokens' })
 await fastify.register(meetingsRoutes, { prefix: '/api/meetings' })
+await fastify.register(settingsRoutes, { prefix: '/api/settings' })
 
 // =============================================================
 // Health Check
