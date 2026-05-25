@@ -91,10 +91,25 @@
 
     <!-- Area Kanvas Utama (Canvas) -->
     <div class="flex-1 w-full h-full overflow-hidden relative" ref="canvasContainer">
+      <!-- Video Screen Share Background (jika ada screen share aktif) -->
+      <video
+        v-if="screenShareTrack"
+        ref="bgVideoEl"
+        autoplay
+        playsinline
+        class="absolute inset-0 w-full h-full object-contain pointer-events-none z-0"
+      ></video>
+
+      <!-- Overlay Gelap Halus saat Share Screen agar Gambar Lebih Kontras -->
+      <div 
+        v-if="screenShareTrack" 
+        class="absolute inset-0 bg-black/45 pointer-events-none z-1"
+      ></div>
+
       <!-- Kanvas Utama -->
       <canvas
         ref="canvasEl"
-        class="w-full h-full cursor-crosshair touch-none"
+        class="w-full h-full cursor-crosshair touch-none absolute inset-0 z-10"
         @mousedown="startDrawing"
         @mousemove="draw"
         @mouseup="stopDrawing"
@@ -105,10 +120,12 @@
       ></canvas>
 
       <!-- Label Status Indicator (bottom-left corner) -->
-      <div class="absolute bottom-4 left-4 bg-black/60 border border-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-2 pointer-events-none select-none">
-        <div class="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></div>
-        <div class="h-2 w-2 rounded-full bg-emerald-500 absolute left-4"></div>
-        <span class="text-[10px] text-white/80 font-bold uppercase tracking-wider">Kolaborasi Aktif</span>
+      <div class="absolute bottom-4 left-4 bg-black/60 border border-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl flex items-center gap-2 pointer-events-none select-none z-20">
+        <div class="h-2 w-2 rounded-full" :class="screenShareTrack ? 'bg-blue-500 animate-ping' : 'bg-emerald-500 animate-ping'"></div>
+        <div class="h-2 w-2 rounded-full absolute left-4" :class="screenShareTrack ? 'bg-blue-500' : 'bg-emerald-500'"></div>
+        <span class="text-[10px] text-white/80 font-bold uppercase tracking-wider">
+          {{ screenShareTrack ? 'Anotasi Berbagi Layar' : 'Kolaborasi Papan Tulis' }}
+        </span>
       </div>
     </div>
 
@@ -162,6 +179,42 @@ const currentTool = ref('brush') // 'brush' | 'eraser' | 'line' | 'rect' | 'circ
 const brushSize = ref(4)
 const selectedColor = ref(settingsStore.primaryColor || '#3b82f6')
 const showClearConfirm = ref(false)
+
+// Deteksi share screen aktif dari remote / local participant
+const screenSharingParticipant = computed(() => {
+  return meetStore.participants.find(p => p.isScreenSharing)
+})
+
+const screenShareTrack = computed(() => {
+  return screenSharingParticipant.value?.screenTrack || null
+})
+
+const bgVideoEl = ref(null)
+
+// Tempelkan/lepas track video share screen secara dinamis (reaktif)
+watch(() => screenShareTrack.value, (newTrack, oldTrack) => {
+  if (oldTrack && bgVideoEl.value) {
+    try {
+      oldTrack.detach(bgVideoEl.value)
+    } catch (e) {
+      console.error('[Whiteboard] Gagal melepas track screen share lama dari bgVideoEl:', e)
+    }
+  }
+  attachScreenTrack()
+}, { immediate: true })
+
+function attachScreenTrack() {
+  nextTick(() => {
+    if (bgVideoEl.value && screenShareTrack.value) {
+      try {
+        screenShareTrack.value.attach(bgVideoEl.value)
+        console.log('[Whiteboard] Berhasil menempelkan track video screen share ke canvas background')
+      } catch (e) {
+        console.error('[Whiteboard] Gagal memasang track video screen share:', e)
+      }
+    }
+  })
+}
 
 let ctx = null
 let isDrawing = false
@@ -238,6 +291,15 @@ onBeforeUnmount(() => {
     resizeObserver.disconnect()
   }
   window.removeEventListener('resize', handleResize)
+  
+  // Lepas track share screen HANYA dari bgVideoEl milik whiteboard agar tidak mengganggu tile video utama
+  if (screenShareTrack.value && bgVideoEl.value) {
+    try {
+      screenShareTrack.value.detach(bgVideoEl.value)
+    } catch (e) {
+      console.error('[Whiteboard] Gagal melepas track screen share dari bgVideoEl saat unmount:', e)
+    }
+  }
 })
 
 function initCanvas() {
@@ -342,10 +404,19 @@ function handleDrawingMove(x, y) {
     ctx.lineWidth = brushSize.value
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = currentTool.value === 'eraser' ? (settingsStore.backgroundColor || '#101113') : selectedColor.value
+
+    if (currentTool.value === 'eraser') {
+      // Gunakan mode destination-out untuk menghapus garis menjadi transparan (sangat penting untuk anotasi share screen!)
+      ctx.globalCompositeOperation = 'destination-out'
+      ctx.strokeStyle = 'rgba(0,0,0,1)'
+    } else {
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.strokeStyle = selectedColor.value
+    }
 
     ctx.lineTo(x, y)
     ctx.stroke()
+    ctx.globalCompositeOperation = 'source-over' // Kembalikan ke normal
 
     currentPoints.push({ x: normX, y: normY })
   } else {
@@ -407,9 +478,14 @@ function redrawCanvas() {
   const canvas = canvasEl.value
   if (!canvas || !ctx) return
 
-  // Bersihkan layar canvas dengan warna background yang dinamis (semantic & white-label)
-  ctx.fillStyle = settingsStore.backgroundColor || '#101113'
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  // Bersihkan kanvas menjadi transparan penuh terlebih dahulu
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  // Jika tidak sedang ada share screen, gambar background solid agar berfungsi sebagai papan tulis biasa
+  if (!screenShareTrack.value) {
+    ctx.fillStyle = settingsStore.backgroundColor || '#101113'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+  }
 
   const w = canvas.width
   const h = canvas.height
@@ -419,8 +495,15 @@ function redrawCanvas() {
     ctx.lineWidth = action.thickness
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    // Untuk kuas penghapus, gunakan warna background lokal penerima secara dinamis
-    ctx.strokeStyle = action.tool === 'eraser' ? (settingsStore.backgroundColor || '#101113') : action.color
+    
+    if (action.tool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out'
+      ctx.strokeStyle = 'rgba(0,0,0,1)'
+    } else {
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.strokeStyle = action.color
+    }
+    
     ctx.beginPath()
 
     if (action.tool === 'brush' || action.tool === 'eraser') {

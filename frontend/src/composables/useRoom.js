@@ -242,6 +242,7 @@ export function useRoom() {
     const enabled = !meetStore.isMicEnabled
     await lkRoom.value.localParticipant.setMicrophoneEnabled(enabled)
     meetStore.toggleMic()
+    _syncParticipants()
   }
 
   /** Toggle camera */
@@ -257,6 +258,7 @@ export function useRoom() {
       await lkRoom.value.localParticipant.setCameraEnabled(false)
     }
     meetStore.toggleCamera()
+    _syncParticipants()
   }
 
   /** Change Camera Resolution seamless */
@@ -286,6 +288,7 @@ export function useRoom() {
         resolution: preset.resolution
       })
     }
+    _syncParticipants()
   }
 
   /** Toggle screen share */
@@ -295,6 +298,7 @@ export function useRoom() {
       const enabled = !meetStore.isScreenSharing
       await lkRoom.value.localParticipant.setScreenShareEnabled(enabled)
       meetStore.setScreenSharing(enabled)
+      _syncParticipants() // Sinkronkan status UI lokal agar langsung menampilkan layar sendiri
     } catch (err) {
       console.error('[useRoom] Screen share error:', err)
     }
