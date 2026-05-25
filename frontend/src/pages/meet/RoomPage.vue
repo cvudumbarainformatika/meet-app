@@ -330,12 +330,36 @@
 
       <!-- ── Main Area ── -->
       <div class="flex-1 flex overflow-hidden min-h-0 relative">
-        <div class="flex-1 p-3 overflow-hidden flex flex-col min-h-0 min-w-0">
+        
+        <!-- Whiteboard Area -->
+        <RoomWhiteboard
+          v-if="meetStore.isWhiteboardActive"
+          @close="roomComposable.sendWhiteboardToggle(false)"
+          @draw="roomComposable.sendWhiteboardDraw"
+          @clear="roomComposable.sendWhiteboardClear"
+          class="flex-1 min-w-0 min-h-0 border border-border bg-card rounded-2xl overflow-hidden m-3 shadow-2xl relative"
+        />
+
+        <!-- Video Grid Area -->
+        <div 
+          v-show="!meetStore.isWhiteboardActive || (meetStore.isWhiteboardActive && !isMobile)"
+          class="overflow-hidden flex flex-col min-h-0 min-w-0 transition-all duration-300"
+          :class="meetStore.isWhiteboardActive ? 'w-72 border-l border-border bg-background/50 backdrop-blur-sm p-3 shrink-0' : 'flex-1 p-3'"
+        >
           <div class="flex-1 h-full flex flex-col gap-3 min-h-0 w-full">
             <div class="flex-1 flex flex-col min-h-0 w-full relative">
               <div class="flex-1 flex overflow-hidden p-2">
-                <div class="m-auto w-full flex flex-wrap justify-center gap-3">
-                  <ParticipantTile v-for="p in meetStore.participants" :key="p.identity" :participant="p" :style="getTileStyle(meetStore.participants.length)" class="aspect-video shadow-lg rounded-xl overflow-hidden bg-card border border-border" />
+                <div 
+                  class="m-auto w-full flex justify-center gap-3"
+                  :class="meetStore.isWhiteboardActive ? 'flex-col overflow-y-auto max-h-[80vh] custom-scrollbar p-1' : 'flex-wrap'"
+                >
+                  <ParticipantTile 
+                    v-for="p in meetStore.participants" 
+                    :key="p.identity" 
+                    :participant="p" 
+                    :style="meetStore.isWhiteboardActive ? { width: '100%', aspectRatio: '16/9' } : getTileStyle(meetStore.participants.length)" 
+                    class="aspect-video shadow-lg rounded-xl overflow-hidden bg-card border border-border shrink-0 animate-none" 
+                  />
                 </div>
               </div>
             </div>
@@ -368,6 +392,7 @@
       :is-host="meetStore.isHost"
       :is-recording="meetStore.isRecording"
       :show-participants="meetStore.showParticipants"
+      :show-whiteboard="meetStore.isWhiteboardActive"
       @toggle-mic="roomComposable.toggleMic"
       @toggle-camera="roomComposable.toggleCamera"
       @toggle-screen-share="roomComposable.toggleScreenShare"
@@ -378,6 +403,7 @@
       @lower-all-hands="lowerAllHands"
       @leave="leaveRoom"
       @toggle-participants="toggleParticipantsPanel"
+      @toggle-whiteboard="toggleWhiteboardPanel"
       @open-settings="showSettingsDialog = true"
     />
     </template>
@@ -505,6 +531,7 @@ import ParticipantTile from '@/components/meet/ParticipantTile.vue'
 import RoomChat from '@/components/meet/RoomChat.vue'
 import RoomParticipants from '@/components/meet/RoomParticipants.vue'
 import RoomControlBar from '@/components/meet/RoomControlBar.vue'
+import RoomWhiteboard from '@/components/meet/RoomWhiteboard.vue'
 import { useNotificationStore } from '@/stores/notification'
 import { api as axios } from '@/boot/axios'
 import AppSelect from '@/components/AppSelect.vue'
@@ -536,9 +563,17 @@ const showChat = ref(false)
 const pinnedId = ref(null)
 const connectionAttempted = ref(false)
 const unreadCount = ref(0)
-const currentPage = ref(1)
 const chatSolid = ref(false)
 const showSettingsDialog = ref(false)
+
+const isMobile = ref(false)
+function checkMobile() {
+  isMobile.value = window.innerWidth < 1024
+}
+function toggleWhiteboardPanel() {
+  const nextState = !meetStore.isWhiteboardActive
+  roomComposable.sendWhiteboardToggle(nextState)
+}
 
 // --- State Profesional Tambahan ---
 const participantSearch = ref('')
@@ -1214,6 +1249,8 @@ async function joinMeeting() {
 
 // --- Lifecycle & Restore Sesi ---
 onMounted(async () => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   window.addEventListener('beforeunload', handleWindowUnload)
   preloadBackgroundImages()
 
@@ -1406,6 +1443,7 @@ function handleWindowUnload() {
 }
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkMobile)
   window.removeEventListener('beforeunload', handleWindowUnload)
   if (timerInterval) clearInterval(timerInterval)
   stopLocalPreview()

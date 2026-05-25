@@ -169,6 +169,34 @@ export function useRoom() {
                 position: 'top'
               })
             }
+          } else if (data.type === 'whiteboard-toggle') {
+            meetStore.setWhiteboardActive(data.active)
+            Notify.create({
+              type: 'info',
+              message: data.active
+                ? `${participant?.name ?? 'Seseorang'} memulai kolaborasi Papan Tulis 🎨`
+                : `Kolaborasi Papan Tulis dihentikan ⏹️`,
+              timeout: 3000,
+              position: 'top-right'
+            })
+          } else if (data.type === 'whiteboard-draw') {
+            meetStore.addWhiteboardAction(data.action)
+          } else if (data.type === 'whiteboard-clear') {
+            meetStore.clearWhiteboardHistory()
+            Notify.create({
+              type: 'warning',
+              message: `Papan tulis dibersihkan oleh ${participant?.name ?? 'Seseorang'} 🧹`,
+              timeout: 3000,
+              position: 'top-right'
+            })
+          } else if (data.type === 'whiteboard-sync-req') {
+            if (meetStore.whiteboardHistory.length > 0) {
+              sendWhiteboardSyncResponse(participant.identity)
+            }
+          } else if (data.type === 'whiteboard-sync-res') {
+            if (data.target === room.localParticipant.identity && meetStore.whiteboardHistory.length === 0) {
+              meetStore.whiteboardHistory = data.history
+            }
           }
         } catch {
           // ignore malformed messages
@@ -186,6 +214,11 @@ export function useRoom() {
       })
 
       _syncParticipants()
+
+      // Minta sinkronisasi gambar papan tulis jika baru bergabung
+      setTimeout(async () => {
+        await sendWhiteboardSyncRequest()
+      }, 1000)
     } catch (err) {
       error.value = err.message
       meetStore.setConnectionState('disconnected')
@@ -408,6 +441,63 @@ export function useRoom() {
     }
   }
 
+  /** Kirim status aktif Papan Tulis */
+  async function sendWhiteboardToggle(active) {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({ type: 'whiteboard-toggle', active })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+    meetStore.setWhiteboardActive(active)
+  }
+
+  /** Kirim goresan/aksi menggambar Papan Tulis */
+  async function sendWhiteboardDraw(action) {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({ type: 'whiteboard-draw', action })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+    meetStore.addWhiteboardAction(action)
+  }
+
+  /** Bersihkan kanvas Papan Tulis massal */
+  async function sendWhiteboardClear() {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({ type: 'whiteboard-clear' })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+    meetStore.clearWhiteboardHistory()
+  }
+
+  /** Kirim permintaan sinkronisasi gambar */
+  async function sendWhiteboardSyncRequest() {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({ type: 'whiteboard-sync-req' })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+  }
+
+  /** Balas permintaan sinkronisasi gambar */
+  async function sendWhiteboardSyncResponse(targetIdentity) {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({
+      type: 'whiteboard-sync-res',
+      target: targetIdentity,
+      history: meetStore.whiteboardHistory
+    })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+  }
+
   onUnmounted(() => {
     disconnect()
   })
@@ -428,5 +518,10 @@ export function useRoom() {
     sendMuteAll,
     sendMuteParticipant,
     sendLowerHand,
+    sendWhiteboardToggle,
+    sendWhiteboardDraw,
+    sendWhiteboardClear,
+    sendWhiteboardSyncRequest,
+    sendWhiteboardSyncResponse,
   }
 }

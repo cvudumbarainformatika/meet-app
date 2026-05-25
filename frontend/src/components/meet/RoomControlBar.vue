@@ -100,6 +100,22 @@
       </q-tooltip>
     </button>
 
+    <!-- Whiteboard Button -->
+    <button
+      @click="emit('toggle-whiteboard')"
+      class="h-12 w-12 rounded-full border flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg cursor-pointer"
+      :class="showWhiteboard
+        ? 'border-primary bg-primary/10 text-primary'
+        : 'bg-card hover:bg-card/80 text-foreground border-border'"
+    >
+      <Palette class="h-5 w-5" />
+      
+      <!-- Quasar Tooltip (Discord Style) -->
+      <q-tooltip anchor="top middle" self="bottom middle" :offset="[0, 8]" class="bg-card text-foreground border border-border shadow-xl text-xs font-semibold rounded-lg px-2.5 py-1.5 backdrop-blur-md">
+        Papan Tulis Kolaboratif
+      </q-tooltip>
+    </button>
+
     <!-- Settings Button (Open Media Options) -->
     <button
       @click="emit('open-settings')"
@@ -135,7 +151,7 @@
 import { ref } from 'vue'
 import {
   Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff,
-  PhoneOff, Smile, Shield, Settings
+  PhoneOff, Smile, Shield, Settings, Palette
 } from 'lucide-vue-next'
 import ControlButton from '@/components/meet/ControlButton.vue'
 
@@ -146,13 +162,14 @@ const props = defineProps({
   isHandRaised: Boolean,
   isHost: Boolean,
   isRecording: Boolean,
-  showParticipants: Boolean
+  showParticipants: Boolean,
+  showWhiteboard: Boolean
 })
 
 const emit = defineEmits([
   'toggle-mic', 'toggle-camera', 'toggle-screen-share', 'toggle-raise-hand',
   'send-reaction', 'toggle-recording', 'mute-all', 'lower-all-hands', 'leave',
-  'toggle-participants', 'open-settings'
+  'toggle-participants', 'open-settings', 'toggle-whiteboard'
 ])
 
 const showReactions = ref(false)

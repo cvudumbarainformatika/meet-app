@@ -36,6 +36,10 @@ export const useMeetStore = defineStore('meet', () => {
   // --- Chat ---
   const messages = ref([])
 
+  // --- Whiteboard State ---
+  const isWhiteboardActive = ref(false)
+  const whiteboardHistory = ref([])
+
   // --- Computed ---
   const isConnected = computed(() => connectionState.value === 'connected')
   const participantCount = computed(() => participants.value.length)
@@ -66,6 +70,8 @@ export const useMeetStore = defineStore('meet', () => {
     isNoiseSuppressionEnabled.value = false
     isCrispVoiceEnabled.value = false
     virtualBackground.value = 'none'
+    isWhiteboardActive.value = false
+    whiteboardHistory.value = []
   }
 
   function setConnectionState(state) {
@@ -128,11 +134,28 @@ export const useMeetStore = defineStore('meet', () => {
     virtualBackground.value = val
   }
 
+  function toggleWhiteboard() {
+    isWhiteboardActive.value = !isWhiteboardActive.value
+  }
+
+  function setWhiteboardActive(val) {
+    isWhiteboardActive.value = val
+  }
+
+  function addWhiteboardAction(act) {
+    whiteboardHistory.value.push(act)
+  }
+
+  function clearWhiteboardHistory() {
+    whiteboardHistory.value = []
+  }
+
   return {
     // State
     room, token, livekitUrl, isHost, currentSessionId,
     connectionState, isMicEnabled, isCameraEnabled, isScreenSharing, cameraResolution,
     isNoiseSuppressionEnabled, isCrispVoiceEnabled, virtualBackground,
+    isWhiteboardActive, whiteboardHistory,
     participants, messages, raisedHands, isRecording, showParticipants, reactions,
     // Computed
     isConnected, participantCount,
@@ -140,6 +163,7 @@ export const useMeetStore = defineStore('meet', () => {
     setRoom, clearRoom, setConnectionState, setSessionId, setParticipants,
     addMessage, toggleMic, toggleCamera, setScreenSharing, setCameraResolution,
     setNoiseSuppression, setCrispVoice, setVirtualBackground,
+    toggleWhiteboard, setWhiteboardActive, addWhiteboardAction, clearWhiteboardHistory,
     setHandRaised, setRecording,
   }
 }, {
