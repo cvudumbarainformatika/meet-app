@@ -332,13 +332,15 @@
       <div class="flex-1 flex overflow-hidden min-h-0 relative">
         
         <!-- Whiteboard Area -->
-        <RoomWhiteboard
-          v-if="meetStore.isWhiteboardActive"
-          @close="roomComposable.sendWhiteboardToggle(false)"
-          @draw="roomComposable.sendWhiteboardDraw"
-          @clear="roomComposable.sendWhiteboardClear"
-          class="flex-1 min-w-0 min-h-0 border border-border bg-card rounded-2xl overflow-hidden m-3 shadow-2xl relative"
-        />
+        <Transition name="slide-whiteboard">
+          <RoomWhiteboard
+            v-if="meetStore.isWhiteboardActive"
+            @close="roomComposable.sendWhiteboardToggle(false)"
+            @draw="roomComposable.sendWhiteboardDraw"
+            @clear="roomComposable.sendWhiteboardClear"
+            class="flex-1 min-w-0 min-h-0 border border-border bg-card rounded-2xl overflow-hidden m-3 shadow-2xl relative"
+          />
+        </Transition>
 
         <!-- Video Grid Area -->
         <div 
@@ -1459,6 +1461,17 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* Transisi Papan Tulis (Whiteboard) Slide-Fade Premium */
+.slide-whiteboard-enter-active,
+.slide-whiteboard-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide-whiteboard-enter-from,
+.slide-whiteboard-leave-to {
+  transform: translateX(-30px) scale(0.98);
+  opacity: 0;
+}
+
 /* Tile pagination transition */
 .tile-fade-enter-active,
 .tile-fade-leave-active {
