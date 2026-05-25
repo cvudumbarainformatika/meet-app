@@ -790,9 +790,19 @@ const joining = ref(false)
 const creating = ref(false)
 const errorMsg = ref('')
 
-// State Kontrol Cepat Audio/Video (Default: Mati/Muted)
-const isMuted = ref(true)
-const isCameraOff = ref(true)
+// State Kontrol Cepat Audio/Video terhubung ke Pinia Store
+const isMuted = computed({
+  get: () => !meetStore.isMicEnabled,
+  set: (val) => {
+    meetStore.isMicEnabled = !val
+  }
+})
+const isCameraOff = computed({
+  get: () => !meetStore.isCameraEnabled,
+  set: (val) => {
+    meetStore.isCameraEnabled = !val
+  }
+})
 
 const joinForm = ref({ slug: '', password: '', showPassword: false })
 const createForm = ref({ name: '', password: '' })

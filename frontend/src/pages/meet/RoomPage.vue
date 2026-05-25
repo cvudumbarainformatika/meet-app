@@ -6,158 +6,278 @@
   ========================================================= -->
   <div class="h-screen bg-background flex flex-col overflow-hidden text-foreground">
     <!-- Fase 1: Green Room Pre-flight Lobby -->
-    <div v-if="!hasJoined" class="flex-1 flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 overflow-y-auto bg-gradient-to-br from-background via-background/95 to-primary/5 select-none relative">
+    <div v-if="!hasJoined" class="flex-1 flex flex-col bg-gradient-to-br from-background via-background/95 to-primary/5 select-none relative overflow-hidden">
       <!-- Background ambient glowing orbs -->
       <div class="absolute right-10 top-10 w-[450px] h-[450px] bg-primary/10 rounded-full blur-3xl pointer-events-none animate-pulse duration-[6000ms]"></div>
       <div class="absolute left-10 bottom-10 w-[450px] h-[450px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none animate-pulse duration-[8000ms]"></div>
 
-      <!-- Main Container (Premium Grid Layout & Responsive) -->
-      <div class="w-full max-w-5xl bg-card/40 backdrop-blur-3xl border border-white/10 rounded-[32px] p-5 sm:p-8 md:p-10 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch relative z-10">
+      <!-- ═══ MOBILE LAYOUT (fullscreen, no-scroll) ═══ -->
+      <div class="flex lg:hidden flex-col h-full relative z-10">
         
-        <!-- Kolom Kiri: Video Preview & Audio Tester (col-span-7) -->
-        <div class="lg:col-span-7 flex flex-col gap-6">
-          <!-- Video preview card with soft container zoom hover effect (resolves mirroring flip issue) -->
-          <div class="w-full aspect-video bg-black/40 rounded-3xl border border-white/5 overflow-hidden relative shadow-inner shadow-black/50 transition-all duration-300 hover:scale-[1.005] group">
-            
-            <!-- Slow pulsing subtle glowing ring around the video -->
-            <div class="absolute inset-0 border border-primary/20 rounded-3xl pointer-events-none group-hover:border-primary/40 transition-colors duration-500"></div>
-            
-            <!-- Local video element (Mirror always scale-x-[-1]) -->
+        <!-- Mobile Top Bar: Room name + participant count -->
+        <div class="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),12px)] pb-2 flex-shrink-0">
+          <div class="flex flex-col">
+            <span class="text-[9px] text-primary font-bold uppercase tracking-widest">Siap Bergabung?</span>
+            <h1 class="text-base font-extrabold text-foreground tracking-tight leading-tight">{{ meetStore.room?.name ?? 'Loading...' }}</h1>
+          </div>
+          <div class="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-full">
+            <span class="relative flex h-1.5 w-1.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+            </span>
+            <span class="text-[10px] font-bold">{{ meetStore.participantCount }} aktif</span>
+          </div>
+        </div>
+
+        <!-- Mobile Video Preview (fills all available space) -->
+        <div class="flex-1 px-3 pb-2 min-h-0">
+          <div class="w-full h-full bg-black/40 rounded-2xl border border-white/5 overflow-hidden relative shadow-inner shadow-black/50 group">
+            <div class="absolute inset-0 border border-primary/20 rounded-2xl pointer-events-none"></div>
             <video
               v-show="tempCameraEnabled"
-              ref="localVideoEl"
+              ref="localVideoMobileEl"
               autoplay
               playsinline
               muted
               class="w-full h-full object-cover scale-x-[-1]"
             ></video>
-
-            <!-- Video Muted Fallback -->
             <div v-if="!tempCameraEnabled" class="absolute inset-0 flex flex-col items-center justify-center bg-black/75 backdrop-blur-lg">
-              <div class="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 shadow-xl transition-transform duration-300 group-hover:scale-105">
-                <CameraOff class="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground animate-pulse" />
+              <div class="h-16 w-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-xl">
+                <CameraOff class="h-7 w-7 text-muted-foreground animate-pulse" />
               </div>
-              <span class="text-xs sm:text-sm text-muted-foreground font-bold uppercase tracking-wider">Kamera Dinonaktifkan</span>
+              <span class="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Kamera Dinonaktifkan</span>
             </div>
 
-            <!-- Quick Control Overlay (Over the video, Google Meet premium style) -->
-            <div class="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-xl px-4 sm:px-5 py-2.5 sm:py-3 rounded-full border border-white/10 shadow-2xl transition-all duration-300 hover:bg-black/70">
-              <!-- Mic button -->
-              <button
-                @click="toggleTempMic"
-                class="h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer shadow-lg"
-                :class="tempMicEnabled ? 'bg-white/10 hover:bg-white/20 text-white border border-white/10' : 'bg-destructive border border-destructive text-destructive-foreground hover:bg-destructive/95'"
-              >
-                <component :is="tempMicEnabled ? Mic : MicOff" class="h-4.5 w-4.5 sm:h-5 sm:w-5" />
-                <q-tooltip class="bg-card text-foreground border border-border shadow-2xl text-xs font-semibold rounded-xl px-3 py-2 backdrop-blur-md">
-                  {{ tempMicEnabled ? 'Matikan Mikrofon' : 'Nyalakan Mikrofon' }}
-                </q-tooltip>
-              </button>
-
-              <!-- Camera button -->
-              <button
-                @click="toggleTempCamera"
-                class="h-10 w-10 sm:h-12 sm:w-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer shadow-lg"
-                :class="tempCameraEnabled ? 'bg-white/10 hover:bg-white/20 text-white border border-white/10' : 'bg-destructive border border-destructive text-destructive-foreground hover:bg-destructive/95'"
-              >
-                <component :is="tempCameraEnabled ? Camera : CameraOff" class="h-4.5 w-4.5 sm:h-5 sm:w-5" />
-                <q-tooltip class="bg-card text-foreground border border-border shadow-2xl text-xs font-semibold rounded-xl px-3 py-2 backdrop-blur-md">
-                  {{ tempCameraEnabled ? 'Matikan Kamera' : 'Nyalakan Kamera' }}
-                </q-tooltip>
-              </button>
-            </div>
-          </div>
-
-          <!-- Tester Audio (Premium Segmented Equalizer style) -->
-          <div class="flex flex-col gap-2 bg-white/5 border border-white/5 px-4 sm:px-5 py-3 sm:py-4 rounded-3xl shadow-lg relative overflow-hidden group">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                <Mic class="h-4.5 w-4.5 text-primary" />
-                <span class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Tes Input Suara</span>
-              </div>
-              <span class="text-[9px] text-muted-foreground font-bold tracking-widest uppercase">Mikrofon Aktif</span>
-            </div>
-
-            <!-- Segmented indicators -->
-            <div class="flex items-center gap-1.5 h-3.5 mt-2 bg-black/20 rounded-full p-1 border border-white/5">
-              <div
-                v-for="i in 16"
-                :key="i"
-                class="flex-1 h-full rounded-full transition-all duration-75"
-                :class="[
-                  tempMicEnabled && (audioLevel >= (i / 16) * 100)
-                    ? (i <= 11 ? 'bg-primary shadow-[0_0_8px_rgba(var(--q-primary),0.6)]' : i <= 14 ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]' : 'bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.6)]')
-                    : 'bg-white/10'
-                ]"
-              ></div>
+            <!-- Audio level mini-bar overlay (top-right corner) -->
+            <div v-if="tempMicEnabled" class="absolute top-3 right-3 flex items-end gap-[2px] h-5 bg-black/50 backdrop-blur-md rounded-lg px-1.5 py-1 border border-white/10">
+              <div v-for="i in 5" :key="'m'+i" class="w-[3px] rounded-full transition-all duration-75" :style="{ height: (audioLevel >= (i / 5) * 100) ? '100%' : '20%' }" :class="audioLevel >= (i / 5) * 100 ? 'bg-primary' : 'bg-white/20'"></div>
             </div>
           </div>
         </div>
 
-        <!-- Kolom Kanan: Rapat Info & Hardware Selectors (col-span-5) -->
-        <div class="lg:col-span-5 flex flex-col justify-between self-stretch py-1 gap-6">
-          <div class="flex flex-col gap-6">
-            <!-- Header Rapat -->
-            <div class="text-left">
-              <h2 class="text-foreground font-bold text-2xl sm:text-3xl tracking-tight">Siap Bergabung?</h2>
-              <p class="text-xs text-muted-foreground mt-1">Atur perangkat keras Anda dengan sempurna sebelum masuk rapat.</p>
-            </div>
-
-            <!-- Meeting Info Card -->
-            <div class="p-4 sm:p-5 bg-white/5 border border-white/5 rounded-3xl flex flex-col gap-2.5 relative overflow-hidden group hover:bg-white/10 transition-all duration-300 shadow-lg">
-              <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-300"></div>
-              <span class="text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-left">Nama Rapat</span>
-              <span class="text-lg sm:text-xl font-bold text-foreground text-left leading-none tracking-tight">{{ meetStore.room?.name ?? 'Loading Rapat...' }}</span>
-              
-              <!-- Participants count badge -->
-              <div class="flex items-center gap-2 mt-2 self-start bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full text-xs font-bold transition-transform hover:scale-105 duration-200">
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </span>
-                <span>{{ meetStore.participantCount }} Peserta Aktif</span>
-              </div>
-            </div>
-
-            <!-- Perangkat Keras Dropdowns (Menggunakan UI AppSelect Premium yang Ada) -->
-            <div class="flex flex-col gap-4 text-left">
-              <!-- Dropdown Kamera -->
-              <AppSelect
-                id="camera-select"
-                label="Pilih Kamera"
-                v-model="selectedCameraId"
-                :options="cameraOptions"
-                text-key="label"
-                value-key="deviceId"
-                :disabled="!tempCameraEnabled"
-                @update:model-value="startLocalPreview"
-              />
-
-              <!-- Dropdown Mikrofon -->
-              <AppSelect
-                id="microphone-select"
-                label="Pilih Mikrofon"
-                v-model="selectedMicrophoneId"
-                :options="microphoneOptions"
-                text-key="label"
-                value-key="deviceId"
-                :disabled="!tempMicEnabled"
-                @update:model-value="startLocalPreview"
-              />
-            </div>
+        <!-- Mobile Bottom Controls Bar (compact, no scroll) -->
+        <div class="flex-shrink-0 px-3 pb-[max(env(safe-area-inset-bottom),8px)] flex flex-col gap-2">
+          <!-- Row 1: Mic, Camera, Effects/Settings buttons -->
+          <div class="flex items-center gap-2">
+            <button
+              @click="toggleTempMic"
+              class="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer text-xs font-bold"
+              :class="tempMicEnabled ? 'bg-white/10 text-white border border-white/10' : 'bg-destructive text-destructive-foreground border border-destructive'"
+            >
+              <component :is="tempMicEnabled ? Mic : MicOff" class="h-4 w-4" />
+              <span>{{ tempMicEnabled ? 'Mic On' : 'Mic Off' }}</span>
+            </button>
+            <button
+              @click="toggleTempCamera"
+              class="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 cursor-pointer text-xs font-bold"
+              :class="tempCameraEnabled ? 'bg-white/10 text-white border border-white/10' : 'bg-destructive text-destructive-foreground border border-destructive'"
+            >
+              <component :is="tempCameraEnabled ? Camera : CameraOff" class="h-4 w-4" />
+              <span>{{ tempCameraEnabled ? 'Cam On' : 'Cam Off' }}</span>
+            </button>
+            <button
+              @click="showSettingsDialog = true"
+              class="h-11 w-11 rounded-xl flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer bg-white/10 text-white border border-white/10 flex-shrink-0"
+            >
+              <Sparkles class="h-4 w-4 text-primary" />
+            </button>
           </div>
 
-          <!-- Tombol Join (Menggunakan UI Button Premium yang Ada) -->
+          <!-- Row 2: Join Button (always visible) -->
           <Button
             @click="joinMeeting"
             size="lg"
-            class="w-full py-6 sm:py-7 rounded-2xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-600/95 text-primary-foreground font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2.5 cursor-pointer hover:shadow-primary/45 active:scale-[0.98] duration-200 mt-4 lg:mt-6"
+            class="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-600/95 text-primary-foreground font-bold text-sm transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] duration-200"
           >
             <span>Gabung Rapat</span>
-            <ArrowRight class="h-5 w-5" />
+            <ArrowRight class="h-4.5 w-4.5" />
           </Button>
         </div>
+      </div>
 
+      <!-- ═══ DESKTOP LAYOUT (unchanged, original 2-column grid) ═══ -->
+      <div class="hidden lg:flex flex-1 justify-center items-center p-6 md:p-8">
+        <div class="w-full max-w-5xl bg-card/40 backdrop-blur-3xl border border-white/10 rounded-[32px] p-8 md:p-10 shadow-2xl grid grid-cols-12 gap-12 items-stretch relative z-10">
+
+          <!-- Kolom Kiri: Video Preview & Audio Tester & Effects (col-span-7) -->
+          <div class="col-span-7 flex flex-col gap-6">
+            <!-- Video preview card -->
+            <div class="w-full aspect-video bg-black/40 rounded-3xl border border-white/5 overflow-hidden relative shadow-inner shadow-black/50 transition-all duration-300 hover:scale-[1.005] group">
+              <div class="absolute inset-0 border border-primary/20 rounded-3xl pointer-events-none group-hover:border-primary/40 transition-colors duration-500"></div>
+              <video
+                v-show="tempCameraEnabled"
+                ref="localVideoEl"
+                autoplay
+                playsinline
+                muted
+                class="w-full h-full object-cover scale-x-[-1]"
+              ></video>
+              <div v-if="!tempCameraEnabled" class="absolute inset-0 flex flex-col items-center justify-center bg-black/75 backdrop-blur-lg">
+                <div class="h-24 w-24 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4 shadow-xl transition-transform duration-300 group-hover:scale-105">
+                  <CameraOff class="h-10 w-10 text-muted-foreground animate-pulse" />
+                </div>
+                <span class="text-sm text-muted-foreground font-bold uppercase tracking-wider">Kamera Dinonaktifkan</span>
+              </div>
+              <!-- Quick Control Overlay -->
+              <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-xl px-4 py-3 rounded-full border border-white/10 shadow-2xl transition-all duration-300 hover:bg-black/70">
+                <button
+                  @click="toggleTempMic"
+                  class="h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer shadow-lg"
+                  :class="tempMicEnabled ? 'bg-white/10 hover:bg-white/20 text-white border border-white/10' : 'bg-destructive border border-destructive text-destructive-foreground hover:bg-destructive/95'"
+                >
+                  <component :is="tempMicEnabled ? Mic : MicOff" class="h-5 w-5" />
+                  <q-tooltip class="bg-card text-foreground border border-border shadow-2xl text-xs font-semibold rounded-xl px-3 py-2 backdrop-blur-md">
+                    {{ tempMicEnabled ? 'Matikan Mikrofon' : 'Nyalakan Mikrofon' }}
+                  </q-tooltip>
+                </button>
+                <button
+                  @click="toggleTempCamera"
+                  class="h-12 w-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer shadow-lg"
+                  :class="tempCameraEnabled ? 'bg-white/10 hover:bg-white/20 text-white border border-white/10' : 'bg-destructive border border-destructive text-destructive-foreground hover:bg-destructive/95'"
+                >
+                  <component :is="tempCameraEnabled ? Camera : CameraOff" class="h-5 w-5" />
+                  <q-tooltip class="bg-card text-foreground border border-border shadow-2xl text-xs font-semibold rounded-xl px-3 py-2 backdrop-blur-md">
+                    {{ tempCameraEnabled ? 'Matikan Kamera' : 'Nyalakan Kamera' }}
+                  </q-tooltip>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tester Audio (Desktop Only) -->
+            <div class="flex flex-col gap-2 bg-white/5 border border-white/5 px-5 py-4 rounded-3xl shadow-lg relative overflow-hidden group">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <Mic class="h-4.5 w-4.5 text-primary" />
+                  <span class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Tes Input Suara</span>
+                </div>
+                <span class="text-[9px] text-muted-foreground font-bold tracking-widest uppercase">Mikrofon Aktif</span>
+              </div>
+              <div class="flex items-center gap-1.5 h-3.5 mt-2 bg-black/20 rounded-full p-1 border border-white/5">
+                <div
+                  v-for="i in 16"
+                  :key="i"
+                  class="flex-1 h-full rounded-full transition-all duration-75"
+                  :class="[
+                    tempMicEnabled && (audioLevel >= (i / 16) * 100)
+                      ? (i <= 11 ? 'bg-primary shadow-[0_0_8px_rgba(var(--q-primary),0.6)]' : i <= 14 ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]' : 'bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.6)]')
+                      : 'bg-white/10'
+                  ]"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Efek Video & Audio Premium (Desktop Only) -->
+            <div class="flex flex-col gap-4 bg-white/5 border border-white/5 px-5 py-4 rounded-3xl shadow-lg relative overflow-hidden group">
+              <div class="flex items-center gap-2">
+                <Sparkles class="h-4.5 w-4.5 text-primary animate-pulse" />
+                <span class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Efek Media Premium</span>
+              </div>
+              <div class="flex flex-col gap-2">
+                <span class="text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-left">Latar Belakang Kamera</span>
+                <div class="grid grid-cols-4 gap-2">
+                  <button
+                    v-for="bg in [
+                      { id: 'none', label: 'Biasa', icon: Camera },
+                      { id: 'blur', label: 'Buram', icon: Sliders },
+                      { id: 'office', label: 'Kantor', icon: Video },
+                      { id: 'nature', label: 'Alam', icon: Sparkles }
+                    ]"
+                    :key="bg.id"
+                    @click="meetStore.setVirtualBackground(bg.id)"
+                    class="flex flex-col items-center justify-center py-2.5 px-1.5 rounded-xl border text-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+                    :class="meetStore.virtualBackground === bg.id ? 'border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--q-primary),0.25)]' : 'border-white/5 bg-white/5 text-muted-foreground hover:text-foreground'"
+                  >
+                    <component :is="bg.icon" class="h-4 w-4 mb-1" />
+                    <span class="text-[10px] font-bold tracking-tight">{{ bg.label }}</span>
+                  </button>
+                </div>
+              </div>
+              <div class="flex flex-col gap-2.5 border-t border-white/5 pt-3">
+                <span class="text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-left">Pembersih Suara Pintar</span>
+                <div class="grid grid-cols-2 gap-3">
+                  <button
+                    @click="meetStore.setNoiseSuppression(!meetStore.isNoiseSuppressionEnabled)"
+                    class="flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                    :class="meetStore.isNoiseSuppressionEnabled ? 'border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--q-primary),0.25)]' : 'border-white/5 bg-white/5 text-muted-foreground hover:text-foreground'"
+                  >
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold">Peredam Bising</span>
+                      <span class="text-[9px] text-muted-foreground mt-0.5">Krisp-style DSP</span>
+                    </div>
+                    <div class="h-5 w-5 rounded-full flex items-center justify-center" :class="meetStore.isNoiseSuppressionEnabled ? 'bg-primary text-primary-foreground' : 'bg-white/10'">
+                      <Check v-if="meetStore.isNoiseSuppressionEnabled" class="h-3 w-3" />
+                    </div>
+                  </button>
+                  <button
+                    @click="meetStore.setCrispVoice(!meetStore.isCrispVoiceEnabled)"
+                    class="flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                    :class="meetStore.isCrispVoiceEnabled ? 'border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--q-primary),0.25)]' : 'border-white/5 bg-white/5 text-muted-foreground hover:text-foreground'"
+                  >
+                    <div class="flex flex-col">
+                      <span class="text-xs font-bold">Vokal Studio</span>
+                      <span class="text-[9px] text-muted-foreground mt-0.5">Kompresor HD</span>
+                    </div>
+                    <div class="h-5 w-5 rounded-full flex items-center justify-center" :class="meetStore.isCrispVoiceEnabled ? 'bg-primary text-primary-foreground' : 'bg-white/10'">
+                      <Check v-if="meetStore.isCrispVoiceEnabled" class="h-3 w-3" />
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kolom Kanan: Rapat Info & Hardware Selectors (col-span-5) -->
+          <div class="col-span-5 flex flex-col justify-between self-stretch py-1 gap-6">
+            <div class="flex flex-col gap-6">
+              <div class="text-left">
+                <h2 class="text-foreground font-bold text-2xl sm:text-3xl tracking-tight">Siap Bergabung?</h2>
+                <p class="text-xs text-muted-foreground mt-1">Atur perangkat keras Anda dengan sempurna sebelum masuk rapat.</p>
+              </div>
+              <div class="flex p-5 bg-white/5 border border-white/5 rounded-3xl flex-col gap-2.5 relative overflow-hidden group hover:bg-white/10 transition-all duration-300 shadow-lg">
+                <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-300"></div>
+                <span class="text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-left">Nama Rapat</span>
+                <span class="text-xl font-bold text-foreground text-left leading-none tracking-tight">{{ meetStore.room?.name ?? 'Loading Rapat...' }}</span>
+                <div class="flex items-center gap-2 mt-2 self-start bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full text-xs font-bold transition-transform hover:scale-105 duration-200">
+                  <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                  </span>
+                  <span>{{ meetStore.participantCount }} Peserta Aktif</span>
+                </div>
+              </div>
+              <div class="flex flex-col gap-4 text-left">
+                <AppSelect
+                  id="camera-select"
+                  label="Pilih Kamera"
+                  v-model="selectedCameraId"
+                  :options="cameraOptions"
+                  text-key="label"
+                  value-key="deviceId"
+                  :disabled="!tempCameraEnabled"
+                  @update:model-value="startLocalPreview"
+                />
+                <AppSelect
+                  id="microphone-select"
+                  label="Pilih Mikrofon"
+                  v-model="selectedMicrophoneId"
+                  :options="microphoneOptions"
+                  text-key="label"
+                  value-key="deviceId"
+                  :disabled="!tempMicEnabled"
+                  @update:model-value="startLocalPreview"
+                />
+              </div>
+            </div>
+            <Button
+              @click="joinMeeting"
+              class="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-600/95 text-primary-foreground font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2.5 cursor-pointer hover:shadow-primary/45 active:scale-[0.98] duration-200 mt-6"
+            >
+              <span>Gabung Rapat</span>
+              <ArrowRight class="h-5 w-5" />
+            </Button>
+          </div>
+
+        </div>
       </div>
     </div>
 
@@ -225,50 +345,6 @@
         <RoomChat :show="showChat" v-model:solid="chatSolid" :messages="meetStore.messages" @close="showChat = false" @send="sendChat" />
         <RoomParticipants :show="meetStore.showParticipants" :solid="chatSolid" :participants="meetStore.participants" :is-host="meetStore.isHost" @close="meetStore.showParticipants = false" @lower-hand="lowerRemoteHand" @mute="muteRemoteParticipant" @mute-all="muteAllParticipants" @lower-all-hands="lowerAllHands" />
 
-        <!-- Dialog Pengaturan Media -->
-        <q-dialog v-model="showSettingsDialog">
-          <q-card class="w-[480px] max-w-[90vw] bg-card/90 backdrop-blur-xl border border-border text-foreground rounded-2xl overflow-hidden shadow-2xl">
-            <div class="px-5 py-4 border-b border-border flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <Settings class="h-5 w-5 text-primary" />
-                <h3 class="text-base font-semibold">Pengaturan Media</h3>
-              </div>
-              <button @click="showSettingsDialog = false" class="h-8 w-8 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground cursor-pointer">
-                <X class="h-4.5 w-4.5" />
-              </button>
-            </div>
-            <div class="p-5 flex flex-col gap-4">
-              <div class="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Kualitas Video (Resolusi Kamera)</div>
-              <div class="flex flex-col gap-2">
-                <div @click="changeResolution('h360')" class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-white/5 select-none" :class="meetStore.cameraResolution === 'h360' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-card/40'">
-                  <div class="flex flex-col">
-                    <span class="text-sm font-semibold">🍃 Hemat Data (360p)</span>
-                    <span class="text-xs text-muted-foreground mt-0.5">Cocok untuk koneksi lambat.</span>
-                  </div>
-                  <Check v-if="meetStore.cameraResolution === 'h360'" class="h-4 w-4 shrink-0 text-primary" />
-                </div>
-                <div @click="changeResolution('h540')" class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-white/5 select-none" :class="meetStore.cameraResolution === 'h540' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-card/40'">
-                  <div class="flex flex-col">
-                    <span class="text-sm font-semibold">📺 Kualitas Standar (540p)</span>
-                    <span class="text-xs text-muted-foreground mt-0.5">Keseimbangan terbaik.</span>
-                  </div>
-                  <Check v-if="meetStore.cameraResolution === 'h540'" class="h-4 w-4 shrink-0 text-primary" />
-                </div>
-                <div @click="changeResolution('h720')" class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-white/5 select-none" :class="meetStore.cameraResolution === 'h720' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-card/40'">
-                  <div class="flex flex-col">
-                    <span class="text-sm font-semibold">✨ High Definition (720p)</span>
-                    <span class="text-xs text-muted-foreground mt-0.5">Gambar HD tajam.</span>
-                  </div>
-                  <Check v-if="meetStore.cameraResolution === 'h720'" class="h-4 w-4 shrink-0 text-primary" />
-                </div>
-              </div>
-            </div>
-            <div class="px-5 py-3.5 border-t border-border flex items-center justify-end bg-card/50">
-              <button @click="showSettingsDialog = false" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground transition-colors">Selesai</button>
-            </div>
-          </q-card>
-        </q-dialog>
-
         <!-- Floating Emoji Reactions -->
         <div class="fixed bottom-24 left-6 z-50 pointer-events-none flex flex-col gap-2">
           <TransitionGroup name="float-up">
@@ -306,15 +382,122 @@
     />
     </template>
 
+    <!-- Dialog Pengaturan Media (Global) -->
+    <q-dialog v-model="showSettingsDialog">
+      <q-card class="w-[500px] max-w-[90vw] bg-card/95 backdrop-blur-xl border border-border text-foreground rounded-3xl overflow-hidden shadow-2xl">
+        <div class="px-6 py-5 border-b border-border flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <Settings class="h-5 w-5 text-primary" />
+            <h3 class="text-base font-bold tracking-tight">Pengaturan Media & Efek</h3>
+          </div>
+          <button @click="showSettingsDialog = false" class="h-8 w-8 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground cursor-pointer">
+            <X class="h-4.5 w-4.5" />
+          </button>
+        </div>
+        <div class="p-6 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+          
+          <!-- Kualitas Video -->
+          <div>
+            <div class="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-3">Kualitas Video (Resolusi)</div>
+            <div class="flex flex-col gap-2">
+              <div @click="changeResolution('h360')" class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-white/5 select-none" :class="meetStore.cameraResolution === 'h360' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-card/40'">
+                <div class="flex flex-col text-left">
+                  <span class="text-xs font-semibold">🍃 Hemat Data (360p)</span>
+                  <span class="text-[10px] text-muted-foreground mt-0.5">Cocok untuk koneksi lambat.</span>
+                </div>
+                <Check v-if="meetStore.cameraResolution === 'h360'" class="h-4 w-4 shrink-0 text-primary" />
+              </div>
+              <div @click="changeResolution('h540')" class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-white/5 select-none" :class="meetStore.cameraResolution === 'h540' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-card/40'">
+                <div class="flex flex-col text-left">
+                  <span class="text-xs font-semibold">📺 Kualitas Standar (540p)</span>
+                  <span class="text-[10px] text-muted-foreground mt-0.5">Keseimbangan terbaik.</span>
+                </div>
+                <Check v-if="meetStore.cameraResolution === 'h540'" class="h-4 w-4 shrink-0 text-primary" />
+              </div>
+              <div @click="changeResolution('h720')" class="flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-white/5 select-none" :class="meetStore.cameraResolution === 'h720' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-card/40'">
+                <div class="flex flex-col text-left">
+                  <span class="text-xs font-semibold">✨ High Definition (720p)</span>
+                  <span class="text-[10px] text-muted-foreground mt-0.5">Gambar HD tajam.</span>
+                </div>
+                <Check v-if="meetStore.cameraResolution === 'h720'" class="h-4 w-4 shrink-0 text-primary" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Efek Latar Belakang -->
+          <div>
+            <div class="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-3">Latar Belakang Kamera</div>
+            <div class="grid grid-cols-4 gap-2">
+              <button
+                v-for="bg in [
+                  { id: 'none', label: 'Biasa', icon: Camera },
+                  { id: 'blur', label: 'Buram', icon: Sliders },
+                  { id: 'office', label: 'Kantor', icon: Video },
+                  { id: 'nature', label: 'Alam', icon: Sparkles }
+                ]"
+                :key="bg.id"
+                @click="meetStore.setVirtualBackground(bg.id)"
+                class="flex flex-col items-center justify-center py-2.5 px-1.5 rounded-xl border text-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+                :class="meetStore.virtualBackground === bg.id ? 'border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--q-primary),0.25)]' : 'border-border bg-card/40 text-muted-foreground hover:text-foreground'"
+              >
+                <component :is="bg.icon" class="h-4 w-4 mb-1" />
+                <span class="text-[10px] font-bold tracking-tight">{{ bg.label }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Pembersih Suara -->
+          <div>
+            <div class="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-3">Pembersih Suara Pintar (DSP)</div>
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Noise Suppression -->
+              <button
+                @click="meetStore.setNoiseSuppression(!meetStore.isNoiseSuppressionEnabled)"
+                class="flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                :class="meetStore.isNoiseSuppressionEnabled ? 'border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--q-primary),0.25)]' : 'border-border bg-card/40 text-muted-foreground hover:text-foreground'"
+              >
+                <div class="flex flex-col">
+                  <span class="text-xs font-bold">Peredam Bising</span>
+                  <span class="text-[9px] text-muted-foreground mt-0.5">Krisp-style DSP</span>
+                </div>
+                <div class="h-5 w-5 rounded-full flex items-center justify-center" :class="meetStore.isNoiseSuppressionEnabled ? 'bg-primary text-primary-foreground' : 'bg-white/10'">
+                  <Check v-if="meetStore.isNoiseSuppressionEnabled" class="h-3 w-3" />
+                </div>
+              </button>
+
+              <!-- Crisp Voice -->
+              <button
+                @click="meetStore.setCrispVoice(!meetStore.isCrispVoiceEnabled)"
+                class="flex items-center justify-between p-3.5 rounded-xl border text-left transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer"
+                :class="meetStore.isCrispVoiceEnabled ? 'border-primary bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--q-primary),0.25)]' : 'border-border bg-card/40 text-muted-foreground hover:text-foreground'"
+              >
+                <div class="flex flex-col">
+                  <span class="text-xs font-bold">Vokal Studio</span>
+                  <span class="text-[9px] text-muted-foreground mt-0.5">Kompresor HD</span>
+                </div>
+                <div class="h-5 w-5 rounded-full flex items-center justify-center" :class="meetStore.isCrispVoiceEnabled ? 'bg-primary text-primary-foreground' : 'bg-white/10'">
+                  <Check v-if="meetStore.isCrispVoiceEnabled" class="h-3 w-3" />
+                </div>
+              </button>
+            </div>
+          </div>
+
+        </div>
+        <div class="px-6 py-4.5 border-t border-border flex items-center justify-end bg-card/50">
+          <button @click="showSettingsDialog = false" class="px-5 py-2.5 text-xs font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-colors cursor-pointer active:scale-95">Selesai</button>
+        </div>
+      </q-card>
+    </q-dialog>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   Video, Copy, MessageSquare, Clock, Users, ChevronLeft, ChevronRight, Settings, Check, X,
-  Mic, MicOff, Camera, CameraOff, ArrowRight, ChevronDown
+  Mic, MicOff, Camera, CameraOff, ArrowRight, ChevronDown, Sliders, Sparkles
 } from 'lucide-vue-next'
 import { useMeetStore } from '@/stores/meet'
 import { useRoom } from '@/composables/useRoom'
@@ -326,6 +509,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { api as axios } from '@/boot/axios'
 import AppSelect from '@/components/AppSelect.vue'
 import { Button } from '@/components/ui/button'
+import { RoomEvent, Track } from 'livekit-client'
 
 const router = useRouter()
 const route = useRoute()
@@ -342,13 +526,10 @@ const microphones = ref([])
 const selectedCameraId = ref('')
 const selectedMicrophoneId = ref('')
 const localVideoEl = ref(null)
+const localVideoMobileEl = ref(null)
 
 const tempMicEnabled = ref(true)
 const tempCameraEnabled = ref(true)
-
-let audioContext = null
-let analyser = null
-let animationFrameId = null
 
 // --- State UI Meeting ---
 const showChat = ref(false)
@@ -517,118 +698,438 @@ function toggleTempCamera() {
   }
 }
 
-async function startLocalPreview() {
-  stopLocalPreview()
+// --- Media Processing Variables ---
+let selfieSegmentation = null
+const isMediaPipeLoaded = ref(false)
+const outputCanvas = document.createElement('canvas')
+const personCanvas = document.createElement('canvas')
+let rawVideoEl = null
+let renderLoopActive = false
+let rawStream = null
 
+let officeBgImage = null
+let natureBgImage = null
+
+// Audio DSP Nodes
+let audioCtx = null
+let audioSourceNode = null
+let highpassNode = null
+let lowpassNode = null
+let compressorNode = null
+let audioDestinationNode = null
+let analyser = null
+let animationFrameId = null
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve()
+      return
+    }
+    const script = document.createElement('script')
+    script.src = src
+    script.onload = resolve
+    script.onerror = reject
+    document.head.appendChild(script)
+  })
+}
+
+function preloadBackgroundImages() {
+  officeBgImage = new Image()
+  officeBgImage.crossOrigin = 'anonymous'
+  officeBgImage.src = 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80'
+
+  natureBgImage = new Image()
+  natureBgImage.crossOrigin = 'anonymous'
+  natureBgImage.src = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80'
+}
+
+async function initSelfieSegmentation() {
+  if (selfieSegmentation) return
   try {
-    const constraints = {
-      video: {
-        deviceId: selectedCameraId.value ? { exact: selectedCameraId.value } : undefined,
-        width: { ideal: 960 },
-        height: { ideal: 540 } // Resolusi ideal 540p di lobi
-      },
-      audio: {
-        deviceId: selectedMicrophoneId.value ? { exact: selectedMicrophoneId.value } : undefined
-      }
-    }
-
-    const stream = await navigator.mediaDevices.getUserMedia(constraints)
-    localStream.value = stream
-
-    // Terapkan status enabled awal sesuai tombol di lobi
-    const videoTrack = stream.getVideoTracks()[0]
-    if (videoTrack) {
-      videoTrack.enabled = tempCameraEnabled.value
-    }
-
-    const audioTrack = stream.getAudioTracks()[0]
-    if (audioTrack) {
-      audioTrack.enabled = tempMicEnabled.value
-    }
-
-    if (localVideoEl.value) {
-      localVideoEl.value.srcObject = stream
-    }
-
-    setupAudioTester(stream)
+    await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js')
+    selfieSegmentation = new window.SelfieSegmentation({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+    })
+    selfieSegmentation.setOptions({
+      modelSelection: 1, // landscape (faster and optimized for closer webcam framing)
+      selfieMode: false
+    })
+    selfieSegmentation.onResults(onSelfieResults)
+    isMediaPipeLoaded.value = true
   } catch (err) {
-    console.error('Gagal memuat pratinjau media lokal:', err)
+    console.error('Gagal memuat MediaPipe Selfie Segmentation:', err)
   }
 }
 
-function stopLocalPreview() {
+function onSelfieResults(results) {
+  if (!outputCanvas || !personCanvas) return
+  const ctx = outputCanvas.getContext('2d')
+  const personCtx = personCanvas.getContext('2d')
+  const w = outputCanvas.width
+  const h = outputCanvas.height
+
+  // 1. Gambar siluet orang di personCanvas dengan komposit source-in
+  personCtx.save()
+  personCtx.clearRect(0, 0, w, h)
+  personCtx.globalCompositeOperation = 'copy'
+  personCtx.drawImage(results.segmentationMask, 0, 0, w, h)
+  personCtx.globalCompositeOperation = 'source-in'
+  personCtx.drawImage(results.image, 0, 0, w, h)
+  personCtx.restore()
+
+  // 2. Gambar background di outputCanvas
+  ctx.save()
+  ctx.clearRect(0, 0, w, h)
+  const bgType = meetStore.virtualBackground
+
+  if (bgType === 'blur') {
+    ctx.filter = 'blur(16px)'
+    ctx.drawImage(results.image, 0, 0, w, h)
+    ctx.filter = 'none'
+  } else if (bgType === 'office') {
+    if (officeBgImage && officeBgImage.complete) {
+      ctx.drawImage(officeBgImage, 0, 0, w, h)
+    } else {
+      ctx.fillStyle = '#1e1f22'
+      ctx.fillRect(0, 0, w, h)
+    }
+  } else if (bgType === 'nature') {
+    if (natureBgImage && natureBgImage.complete) {
+      ctx.drawImage(natureBgImage, 0, 0, w, h)
+    } else {
+      ctx.fillStyle = '#1e1f22'
+      ctx.fillRect(0, 0, w, h)
+    }
+  } else {
+    ctx.drawImage(results.image, 0, 0, w, h)
+  }
+
+  // 3. Gambar orang di atas background virtual
+  if (bgType !== 'none') {
+    ctx.drawImage(personCanvas, 0, 0, w, h)
+  }
+  ctx.restore()
+}
+
+function startCanvasRenderLoop() {
+  const renderFrame = async () => {
+    if (!renderLoopActive || !rawVideoEl) return
+
+    if (rawVideoEl.readyState >= 2 && rawVideoEl.videoWidth > 0) {
+      const w = rawVideoEl.videoWidth
+      const h = rawVideoEl.videoHeight
+
+      if (outputCanvas.width !== w || outputCanvas.height !== h) {
+        outputCanvas.width = w
+        outputCanvas.height = h
+        personCanvas.width = w
+        personCanvas.height = h
+      }
+
+      const bgType = meetStore.virtualBackground
+      if (bgType === 'none') {
+        const ctx = outputCanvas.getContext('2d')
+        ctx.clearRect(0, 0, w, h)
+        ctx.drawImage(rawVideoEl, 0, 0, w, h)
+      } else {
+        if (isMediaPipeLoaded.value && selfieSegmentation) {
+          try {
+            await selfieSegmentation.send({ image: rawVideoEl })
+          } catch (e) {
+            console.error('MediaPipe send error:', e)
+            const ctx = outputCanvas.getContext('2d')
+            ctx.clearRect(0, 0, w, h)
+            ctx.drawImage(rawVideoEl, 0, 0, w, h)
+          }
+        } else {
+          const ctx = outputCanvas.getContext('2d')
+          ctx.clearRect(0, 0, w, h)
+          ctx.drawImage(rawVideoEl, 0, 0, w, h)
+        }
+      }
+    }
+
+    requestAnimationFrame(renderFrame)
+  }
+
+  renderFrame()
+}
+
+function setupAudioDSP(stream) {
+  cleanupAudioDSP()
+
+  const audioTracks = stream.getAudioTracks()
+  if (!audioTracks || audioTracks.length === 0) return null
+
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    audioSourceNode = audioCtx.createMediaStreamSource(stream)
+
+    // Filter Bandpass (Highpass + Lowpass kombinasi yang natural)
+    highpassNode = audioCtx.createBiquadFilter()
+    highpassNode.type = 'highpass'
+    highpassNode.frequency.value = 150 // Redam gemuruh bising frekuensi rendah (<150Hz)
+
+    lowpassNode = audioCtx.createBiquadFilter()
+    lowpassNode.type = 'lowpass'
+    lowpassNode.frequency.value = 4000 // Redam desis frekuensi tinggi (>4000Hz)
+
+    // Dynamics Compressor untuk Vokal Studio Bulat & Tebal
+    compressorNode = audioCtx.createDynamicsCompressor()
+    compressorNode.threshold.value = -24
+    compressorNode.knee.value = 30
+    compressorNode.ratio.value = 12
+    compressorNode.attack.value = 0.003
+    compressorNode.release.value = 0.25
+
+    // Destination
+    audioDestinationNode = audioCtx.createMediaStreamDestination()
+
+    updateAudioDSPConnections()
+
+    // Analyser untuk visualisasi mikrofon reaktif di lobi
+    analyser = audioCtx.createAnalyser()
+    analyser.fftSize = 256
+
+    const finalSource = audioCtx.createMediaStreamSource(audioDestinationNode.stream)
+    finalSource.connect(analyser)
+
+    startVolumeCheckLoop()
+
+    return audioDestinationNode.stream.getAudioTracks()[0]
+  } catch (err) {
+    console.error('Error inisialisasi Audio DSP:', err)
+    return audioTracks[0]
+  }
+}
+
+function updateAudioDSPConnections() {
+  if (!audioCtx || !audioSourceNode) return
+
+  try {
+    audioSourceNode.disconnect()
+    highpassNode.disconnect()
+    lowpassNode.disconnect()
+    compressorNode.disconnect()
+  } catch (e) {
+    // Abaikan jika node belum terhubung
+  }
+
+  let currentNode = audioSourceNode
+
+  // 1. Noise Suppression: Highpass + Lowpass vokal bandpass
+  if (meetStore.isNoiseSuppressionEnabled) {
+    currentNode.connect(highpassNode)
+    highpassNode.connect(lowpassNode)
+    currentNode = lowpassNode
+  }
+
+  // 2. Crisp Voice: Dynamics Compressor
+  if (meetStore.isCrispVoiceEnabled) {
+    currentNode.connect(compressorNode)
+    currentNode = compressorNode
+  }
+
+  currentNode.connect(audioDestinationNode)
+}
+
+function cleanupAudioDSP() {
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId)
     animationFrameId = null
   }
-  if (audioContext) {
+  if (audioCtx) {
     try {
-      audioContext.close()
+      audioCtx.close()
     } catch (e) {
       console.error('Gagal menutup AudioContext:', e)
     }
-    audioContext = null
+    audioCtx = null
+  }
+  audioSourceNode = null
+  highpassNode = null
+  lowpassNode = null
+  compressorNode = null
+  audioDestinationNode = null
+  analyser = null
+}
+
+function startVolumeCheckLoop() {
+  if (!analyser) return
+
+  const bufferLength = analyser.frequencyBinCount
+  const dataArray = new Uint8Array(bufferLength)
+
+  const checkVolume = () => {
+    if (!tempMicEnabled.value || !localStream.value || !analyser) {
+      audioLevel.value = 0
+      animationFrameId = requestAnimationFrame(checkVolume)
+      return
+    }
+
+    analyser.getByteFrequencyData(dataArray)
+    let sum = 0
+    for (let i = 0; i < bufferLength; i++) {
+      sum += dataArray[i]
+    }
+    const average = sum / bufferLength
+    audioLevel.value = Math.min(100, Math.round((average / 128) * 100))
+
+    animationFrameId = requestAnimationFrame(checkVolume)
+  }
+
+  checkVolume()
+}
+
+async function startMediaProcessor() {
+  stopMediaProcessor()
+
+  try {
+    // Resolusi kamera berdasarkan store state
+    const idealWidth = meetStore.cameraResolution === 'h720' ? 1280 : meetStore.cameraResolution === 'h1080' ? 1920 : meetStore.cameraResolution === 'h360' ? 640 : 960
+    const idealHeight = meetStore.cameraResolution === 'h720' ? 720 : meetStore.cameraResolution === 'h1080' ? 1080 : meetStore.cameraResolution === 'h360' ? 360 : 540
+
+    const constraints = {
+      video: {
+        deviceId: selectedCameraId.value ? { exact: selectedCameraId.value } : undefined,
+        width: { ideal: idealWidth },
+        height: { ideal: idealHeight }
+      },
+      audio: {
+        deviceId: selectedMicrophoneId.value ? { exact: selectedMicrophoneId.value } : undefined,
+        echoCancellation: true,
+        noiseSuppression: false // Handled in High-Fidelity DSP
+      }
+    }
+
+    rawStream = await navigator.mediaDevices.getUserMedia(constraints)
+
+    // Set up Raw Video untuk pengolahan
+    const rawVideoTrack = rawStream.getVideoTracks()[0]
+    if (rawVideoTrack) {
+      rawVideoEl = document.createElement('video')
+      rawVideoEl.autoplay = true
+      rawVideoEl.playsinline = true
+      rawVideoEl.muted = true
+      rawVideoEl.srcObject = new MediaStream([rawVideoTrack])
+      rawVideoEl.play().catch(e => console.error('Play raw video failed:', e))
+
+      renderLoopActive = true
+      startCanvasRenderLoop()
+    }
+
+    // Set up Audio DSP
+    const rawAudioTrack = rawStream.getAudioTracks()[0]
+    let finalAudioTrack = null
+    if (rawAudioTrack) {
+      finalAudioTrack = setupAudioDSP(rawStream)
+    }
+
+    // Capture processed Video track dari Canvas
+    const processedVideoTrack = outputCanvas.captureStream(30).getVideoTracks()[0]
+    if (processedVideoTrack) {
+      processedVideoTrack.enabled = tempCameraEnabled.value
+    }
+    if (finalAudioTrack) {
+      finalAudioTrack.enabled = tempMicEnabled.value
+    }
+
+    const finalStream = new MediaStream()
+    if (processedVideoTrack) finalStream.addTrack(processedVideoTrack)
+    if (finalAudioTrack) finalStream.addTrack(finalAudioTrack)
+
+    localStream.value = finalStream
+
+    if (localVideoEl.value) {
+      localVideoEl.value.srcObject = finalStream
+    }
+    if (localVideoMobileEl.value) {
+      localVideoMobileEl.value.srcObject = finalStream
+    }
+
+    // Pasang instan ke LiveKit jika sudah dalam rapat aktif
+    if (hasJoined.value) {
+      await applyProcessedTracksToLiveKit()
+    }
+
+  } catch (err) {
+    console.error('Gagal menjalankan media processor:', err)
+  }
+}
+
+function stopMediaProcessor() {
+  renderLoopActive = false
+  cleanupAudioDSP()
+
+  if (rawStream) {
+    rawStream.getTracks().forEach(t => t.stop())
+    rawStream = null
+  }
+  if (rawVideoEl) {
+    rawVideoEl.srcObject = null
+    rawVideoEl = null
   }
   if (localStream.value) {
-    localStream.value.getTracks().forEach(track => {
-      track.stop()
-    })
+    localStream.value.getTracks().forEach(t => t.stop())
     localStream.value = null
   }
   if (localVideoEl.value) {
     localVideoEl.value.srcObject = null
   }
+  if (localVideoMobileEl.value) {
+    localVideoMobileEl.value.srcObject = null
+  }
   audioLevel.value = 0
 }
 
-function setupAudioTester(stream) {
-  const audioTracks = stream.getAudioTracks()
-  if (!audioTracks || audioTracks.length === 0) {
-    audioLevel.value = 0
-    return
-  }
+async function startLocalPreview() {
+  await startMediaProcessor()
+}
+
+function stopLocalPreview() {
+  stopMediaProcessor()
+}
+
+async function applyProcessedTracksToLiveKit() {
+  const room = roomComposable.lkRoom.value
+  if (!room) return
 
   try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)()
-    analyser = audioContext.createAnalyser()
-    analyser.fftSize = 256
-
-    const source = audioContext.createMediaStreamSource(stream)
-    source.connect(analyser)
-
-    const bufferLength = analyser.frequencyBinCount
-    const dataArray = new Uint8Array(bufferLength)
-
-    const checkVolume = () => {
-      if (!tempMicEnabled.value || !localStream.value || !analyser) {
-        audioLevel.value = 0
-        animationFrameId = requestAnimationFrame(checkVolume)
-        return
+    // 1. Ganti Video Track di LiveKit secara Zero-Blink
+    const videoPub = room.localParticipant.getTrackPublication(Track.Source.Camera)
+    if (videoPub && videoPub.track) {
+      const processedVideoTrack = outputCanvas.captureStream(30).getVideoTracks()[0]
+      if (processedVideoTrack) {
+        const defaultTrack = videoPub.track.mediaStreamTrack
+        await videoPub.track.replaceTrack(processedVideoTrack)
+        if (defaultTrack && defaultTrack !== processedVideoTrack) {
+          defaultTrack.stop() // Bersihkan track default duplikat untuk hemat resource
+        }
+        console.log('[MediaProcessor] Video track berhasil digantikan ke Canvas Stream (Zero-Blink)')
       }
-
-      analyser.getByteFrequencyData(dataArray)
-      let sum = 0
-      for (let i = 0; i < bufferLength; i++) {
-        sum += dataArray[i]
-      }
-      const average = sum / bufferLength
-      // Konversi rata-rata amplitudo ke skala persentase 0-100
-      audioLevel.value = Math.min(100, Math.round((average / 128) * 100))
-
-      animationFrameId = requestAnimationFrame(checkVolume)
     }
 
-    checkVolume()
+    // 2. Ganti Audio Track di LiveKit ke DSP Stream
+    const audioPub = room.localParticipant.getTrackPublication(Track.Source.Microphone)
+    if (audioPub && audioPub.track) {
+      const processedAudioTrack = audioDestinationNode?.stream?.getAudioTracks()[0]
+      if (processedAudioTrack) {
+        const defaultTrack = audioPub.track.mediaStreamTrack
+        await audioPub.track.replaceTrack(processedAudioTrack)
+        if (defaultTrack && defaultTrack !== processedAudioTrack) {
+          defaultTrack.stop() // Bersihkan track default duplikat
+        }
+        console.log('[MediaProcessor] Audio track berhasil digantikan ke DSP Stream')
+      }
+    }
   } catch (err) {
-    console.error('Error saat inisialisasi tester audio:', err)
-    audioLevel.value = 0
+    console.error('Gagal menerapkan processed tracks ke LiveKit:', err)
   }
 }
 
 async function joinMeeting() {
-  stopLocalPreview()
-
-  // Sinkronkan ke store sebelum connect agar track LiveKit terbit sesuai setelan lobi
+  // Jangan hentikan media processor, melainkan transisikan secara zero-blink!
   if (meetStore.isMicEnabled !== tempMicEnabled.value) {
     meetStore.toggleMic()
   }
@@ -642,15 +1143,44 @@ async function joinMeeting() {
   try {
     await roomComposable.connect(meetStore.livekitUrl, meetStore.token)
 
-    // Switch perangkat di LiveKit secara seamless sesuai pilihan lobi
-    if (roomComposable.lkRoom.value) {
+    // Pasang listeners reaktif di LiveKit Room untuk hot-swap track otomatis saat mute/unmute
+    const room = roomComposable.lkRoom.value
+    if (room) {
+      // Sinkronkan device id
       if (tempCameraEnabled.value && selectedCameraId.value) {
-        await roomComposable.lkRoom.value.switchActiveDevice('videoinput', selectedCameraId.value)
+        await room.switchActiveDevice('videoinput', selectedCameraId.value)
       }
       if (tempMicEnabled.value && selectedMicrophoneId.value) {
-        await roomComposable.lkRoom.value.switchActiveDevice('audioinput', selectedMicrophoneId.value)
+        await room.switchActiveDevice('audioinput', selectedMicrophoneId.value)
       }
+
+      room.on(RoomEvent.LocalVideoTrackPublished, async (publication) => {
+        const processedVideoTrack = outputCanvas.captureStream(30).getVideoTracks()[0]
+        if (processedVideoTrack && publication.track) {
+          const defaultTrack = publication.track.mediaStreamTrack
+          await publication.track.replaceTrack(processedVideoTrack)
+          if (defaultTrack && defaultTrack !== processedVideoTrack) {
+            defaultTrack.stop()
+          }
+        }
+      })
+
+      room.on(RoomEvent.LocalAudioTrackPublished, async (publication) => {
+        const processedAudioTrack = audioDestinationNode?.stream?.getAudioTracks()[0]
+        if (processedAudioTrack && publication.track) {
+          const defaultTrack = publication.track.mediaStreamTrack
+          await publication.track.replaceTrack(processedAudioTrack)
+          if (defaultTrack && defaultTrack !== processedAudioTrack) {
+            defaultTrack.stop()
+          }
+        }
+      })
     }
+
+    // Lakukan replace track pertama kali pasca-koneksi
+    setTimeout(async () => {
+      await applyProcessedTracksToLiveKit()
+    }, 1200)
 
     if (meetStore.isHost && meetStore.room?.id) {
       try {
@@ -678,14 +1208,15 @@ async function joinMeeting() {
     notificationStore.showError('Koneksi Gagal', `Gagal terhubung ke server rapat: ${err.message}`)
     hasJoined.value = false
     await loadDevices()
-    await startLocalPreview()
+    await startMediaProcessor()
   }
 }
 
 // --- Lifecycle & Restore Sesi ---
 onMounted(async () => {
   window.addEventListener('beforeunload', handleWindowUnload)
-  
+  preloadBackgroundImages()
+
   setTimeout(async () => {
     // Jalankan restorasi token jika reload atau navigasi langsung
     if (!meetStore.token || !meetStore.livekitUrl) {
@@ -723,9 +1254,34 @@ onMounted(async () => {
     tempMicEnabled.value = meetStore.isMicEnabled
     tempCameraEnabled.value = meetStore.isCameraEnabled
 
+    // Load segmentasi secara proaktif jika background awal bukan none
+    if (meetStore.virtualBackground !== 'none') {
+      await initSelfieSegmentation()
+    }
+
     await loadDevices()
-    await startLocalPreview()
+    await startMediaProcessor()
   }, 400)
+})
+
+// Watchers untuk efek media
+watch(() => meetStore.virtualBackground, async (newVal) => {
+  if (newVal !== 'none' && !isMediaPipeLoaded.value) {
+    await initSelfieSegmentation()
+  }
+})
+
+watch(() => meetStore.isNoiseSuppressionEnabled, () => {
+  updateAudioDSPConnections()
+})
+
+watch(() => meetStore.isCrispVoiceEnabled, () => {
+  updateAudioDSPConnections()
+})
+
+watch(() => meetStore.cameraResolution, async () => {
+  // Mulai ulang processor untuk meresolusi kamera baru baik di lobi maupun rapat aktif
+  await startMediaProcessor()
 })
 
 watch(() => meetStore.messages.length, () => {

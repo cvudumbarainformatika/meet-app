@@ -25,6 +25,7 @@
       playsinline
       muted
       class="absolute inset-0 w-full h-full bg-black"
+      :class="{ 'scale-x-[-1]': participant.isLocal && !participant.isScreenSharing }"
       :style="{ objectFit: isPinned ? 'contain' : 'cover' }"
     />
 

@@ -22,6 +22,9 @@ export const useMeetStore = defineStore('meet', () => {
   const isCameraEnabled = ref(true)
   const isScreenSharing = ref(false)
   const cameraResolution = ref('h540') // default qHD (540p)
+  const isNoiseSuppressionEnabled = ref(false)
+  const isCrispVoiceEnabled = ref(false)
+  const virtualBackground = ref('none') // 'none' | 'blur' | 'office' | 'nature'
 
   // --- Participants ---
   const participants = ref([])
@@ -60,6 +63,9 @@ export const useMeetStore = defineStore('meet', () => {
     raisedHands.value = {}
     isRecording.value = false
     showParticipants.value = false
+    isNoiseSuppressionEnabled.value = false
+    isCrispVoiceEnabled.value = false
+    virtualBackground.value = 'none'
   }
 
   function setConnectionState(state) {
@@ -110,16 +116,30 @@ export const useMeetStore = defineStore('meet', () => {
     cameraResolution.value = res
   }
 
+  function setNoiseSuppression(val) {
+    isNoiseSuppressionEnabled.value = val
+  }
+
+  function setCrispVoice(val) {
+    isCrispVoiceEnabled.value = val
+  }
+
+  function setVirtualBackground(val) {
+    virtualBackground.value = val
+  }
+
   return {
     // State
     room, token, livekitUrl, isHost, currentSessionId,
     connectionState, isMicEnabled, isCameraEnabled, isScreenSharing, cameraResolution,
+    isNoiseSuppressionEnabled, isCrispVoiceEnabled, virtualBackground,
     participants, messages, raisedHands, isRecording, showParticipants, reactions,
     // Computed
     isConnected, participantCount,
     // Actions
     setRoom, clearRoom, setConnectionState, setSessionId, setParticipants,
     addMessage, toggleMic, toggleCamera, setScreenSharing, setCameraResolution,
+    setNoiseSuppression, setCrispVoice, setVirtualBackground,
     setHandRaised, setRecording,
   }
 }, {

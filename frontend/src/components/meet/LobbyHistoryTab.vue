@@ -64,7 +64,7 @@
                 Belum ada riwayat sesi rapat{{ selectedRoom ? ' untuk room ini' : '' }}.
               </td>
             </tr>
-            <tr v-for="session in filteredSessions" :key="session.id" class="border-b border-border/50 hover:bg-muted/30 transition-colors">
+            <tr v-for="session in paginatedSessions" :key="session.id" class="border-b border-border/50 hover:bg-muted/30 transition-colors">
               <td class="px-4 py-3">
                 <div class="font-medium text-foreground">{{ formatDate(session.started_at) }}</div>
                 <div class="text-xs text-muted-foreground">{{ formatTime(session.started_at) }}</div>
@@ -125,13 +125,66 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <div v-if="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 border-t border-border/40 pt-4 animate-fade-in-up">
+        <span class="text-xs text-muted-foreground font-medium">
+          Menampilkan {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredSessions.length) }} dari {{ filteredSessions.length }} sesi
+        </span>
+        <div class="flex items-center gap-2">
+          <!-- First Page -->
+          <button 
+            @click="currentPage = 1" 
+            :disabled="currentPage === 1"
+            class="h-9 w-9 rounded-xl border border-border bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 transition-all text-xs font-bold flex items-center justify-center cursor-pointer disabled:cursor-not-allowed active:scale-95 shrink-0"
+            title="Halaman Pertama"
+          >
+            <ChevronsLeft class="h-3.5 w-3.5" />
+          </button>
+
+          <!-- Previous Page -->
+          <button 
+            @click="prevPage" 
+            :disabled="currentPage === 1"
+            class="h-9 px-3 rounded-xl border border-border bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed active:scale-95 shrink-0"
+          >
+            <ChevronLeft class="h-3.5 w-3.5" />
+            <span class="hidden sm:inline">Sebelumnya</span>
+          </button>
+
+          <!-- Current Page Info -->
+          <div class="px-3.5 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-extrabold tracking-wide shrink-0">
+            {{ currentPage }} / {{ totalPages }}
+          </div>
+
+          <!-- Next Page -->
+          <button 
+            @click="nextPage" 
+            :disabled="currentPage === totalPages"
+            class="h-9 px-3 rounded-xl border border-border bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed active:scale-95 shrink-0"
+          >
+            <span class="hidden sm:inline">Selanjutnya</span>
+            <ChevronRight class="h-3.5 w-3.5" />
+          </button>
+
+          <!-- Last Page -->
+          <button 
+            @click="currentPage = totalPages" 
+            :disabled="currentPage === totalPages"
+            class="h-9 w-9 rounded-xl border border-border bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-white/5 transition-all text-xs font-bold flex items-center justify-center cursor-pointer disabled:cursor-not-allowed active:scale-95 shrink-0"
+            title="Halaman Terakhir"
+          >
+            <ChevronsRight class="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { History, RefreshCw, Filter, X, Plus, FileText } from 'lucide-vue-next'
+import { History, RefreshCw, Filter, X, Plus, FileText, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
 
 const props = defineProps({
   sessions: Array,
@@ -157,6 +210,36 @@ watch(selectedRoom, (newVal) => {
 const filteredSessions = computed(() => {
   if (!selectedRoom.value) return props.sessions
   return props.sessions.filter(s => s.room_name.toLowerCase() === selectedRoom.value.toLowerCase())
+})
+
+// --- Pagination Logic ---
+const currentPage = ref(1)
+const itemsPerPage = 8
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredSessions.value.length / itemsPerPage) || 1
+})
+
+const paginatedSessions = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  return filteredSessions.value.slice(start, start + itemsPerPage)
+})
+
+function prevPage() {
+  if (currentPage.value > 1) currentPage.value--
+}
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+// Reset halaman ke 1 jika filter berubah
+watch(selectedRoom, () => {
+  currentPage.value = 1
+})
+
+watch(() => props.sessions, () => {
+  currentPage.value = 1
 })
 
 function formatDate(isoDate) {

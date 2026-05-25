@@ -228,19 +228,10 @@ export function useRoom() {
 
   /** Change Camera Resolution seamless */
   async function changeCameraResolution(resName) {
-    if (!lkRoom.value) return
     const preset = VideoPresets[resName]
     if (!preset) return
 
     meetStore.setCameraResolution(resName)
-
-    if (meetStore.isCameraEnabled) {
-      // Disable and enable seamlessly to re-publish with new resolution constraints
-      await lkRoom.value.localParticipant.setCameraEnabled(false)
-      await lkRoom.value.localParticipant.setCameraEnabled(true, {
-        resolution: preset.resolution
-      })
-    }
 
     Notify.create({
       type: 'positive',
@@ -252,6 +243,16 @@ export function useRoom() {
       timeout: 3000,
       position: 'top'
     })
+
+    if (!lkRoom.value) return
+
+    if (meetStore.isCameraEnabled) {
+      // Disable and enable seamlessly to re-publish with new resolution constraints
+      await lkRoom.value.localParticipant.setCameraEnabled(false)
+      await lkRoom.value.localParticipant.setCameraEnabled(true, {
+        resolution: preset.resolution
+      })
+    }
   }
 
   /** Toggle screen share */
