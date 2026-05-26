@@ -121,7 +121,7 @@ export default fp(async (fastify) => {
       fastify.log.info('👤 Owner account (pharyyady@gmail.com) seeded successfully')
     }
   } catch (err) {
-    fastify.log.error('❌ Database migration failed:', err)
+    fastify.log.error(err, '❌ Database migration failed:')
     throw err
   } finally {
     client.release()

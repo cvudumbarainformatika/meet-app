@@ -5,13 +5,19 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Install all dependencies (including devDependencies for tsc)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install
 
 # Copy source & build
 COPY . .
 RUN npm run build
+
+# Install only production dependencies
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --omit=dev
 
 # =============================================================
 # Production Image
@@ -24,7 +30,7 @@ ENV NODE_ENV=production
 
 # Copy built files
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 
 EXPOSE 3000

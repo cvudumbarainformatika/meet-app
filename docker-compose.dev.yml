@@ -34,8 +34,8 @@ services:
     ports:
       - "9000:9000"  # Quasar dev server (akses langsung untuk debug)
     environment:
-      VITE_API_BASE_URL: http://localhost:8080
-      VITE_LIVEKIT_URL: ws://localhost:7880
+      VITE_API_BASE_URL: /
+      VITE_LIVEKIT_URL: /livekit
     command: npm run dev -- --host 0.0.0.0
 
   # Override Nginx untuk expose port 8080 di dev (karena user terbiasa pakai port)

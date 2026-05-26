@@ -16,10 +16,12 @@ import {
 import { useMeetStore } from '@/stores/meet'
 import { Notify } from 'quasar'
 
+// Shared LiveKit Room instance at module level (Singleton Pattern)
+const lkRoom = ref(null)
+const error = ref(null)
+
 export function useRoom() {
   const meetStore = useMeetStore()
-  const lkRoom = ref(null)   // LiveKit Room instance (markRaw agar tidak reactive deep)
-  const error = ref(null)
 
   /**
    * Connect ke LiveKit room
@@ -94,11 +96,24 @@ export function useRoom() {
         try {
           const text = new TextDecoder().decode(payload)
           const data = JSON.parse(text)
+          console.log('[LiveKit DataReceived]', data.type, data, 'from:', participant?.identity)
           if (data.type === 'chat') {
             meetStore.addMessage({
               sender: participant?.name ?? 'Unknown',
               senderId: participant?.identity ?? '',
               text: data.text,
+            })
+          } else if (data.type === 'file-share') {
+            meetStore.addMessage({
+              sender: participant?.name ?? 'Unknown',
+              senderId: participant?.identity ?? '',
+              file: data.file,
+            })
+            Notify.create({
+              type: 'info',
+              message: `${participant?.name ?? 'Seseorang'} membagikan berkas: ${data.file.name} 📁`,
+              timeout: 4000,
+              position: 'top-right'
             })
           } else if (data.type === 'raise-hand') {
             meetStore.setHandRaised(participant?.identity || '', data.raised)
@@ -197,14 +212,108 @@ export function useRoom() {
             if (data.target === room.localParticipant.identity && meetStore.whiteboardHistory.length === 0) {
               meetStore.whiteboardHistory = data.history
             }
+          } else if (data.type === 'poll-create') {
+            meetStore.addPoll(data.poll)
+            Notify.create({
+              type: 'info',
+              message: `Jajak Pendapat Baru: "${data.poll.question}" 🗳️`,
+              timeout: 4000,
+              position: 'top-right'
+            })
+          } else if (data.type === 'poll-vote') {
+            meetStore.votePoll(data.pollId, data.optionId, data.voter)
+          } else if (data.type === 'poll-close') {
+            meetStore.closePoll(data.pollId)
+            Notify.create({
+              type: 'warning',
+              message: 'Sebuah Jajak Pendapat telah ditutup 🔒',
+              timeout: 3000,
+              position: 'top-right'
+            })
+          } else if (data.type === 'qna-ask') {
+            meetStore.addQuestion(data.question)
+            Notify.create({
+              type: 'info',
+              message: `Pertanyaan baru dari ${data.question.sender} 💬`,
+              timeout: 4000,
+              position: 'top-right'
+            })
+          } else if (data.type === 'qna-upvote') {
+            meetStore.upvoteQuestion(data.questionId, data.identity)
+          } else if (data.type === 'qna-answer') {
+            meetStore.answerQuestion(data.questionId, data.answerText)
+            Notify.create({
+              type: 'positive',
+              message: 'Pertanyaan Anda telah dijawab oleh Host! 🎉',
+              timeout: 5000,
+              position: 'top-right'
+            })
+          } else if (data.type === 'polls-sync-req') {
+            if (meetStore.polls.length > 0) {
+              sendPollsSyncResponse(participant.identity)
+            }
+          } else if (data.type === 'polls-sync-res') {
+            if (data.target === room.localParticipant.identity && meetStore.polls.length === 0) {
+              meetStore.polls = data.polls
+            }
+          } else if (data.type === 'qna-sync-req') {
+            if (meetStore.qna.length > 0) {
+              sendQnaSyncResponse(participant.identity)
+            }
+          } else if (data.type === 'qna-sync-res') {
+            if (data.target === room.localParticipant.identity && meetStore.qna.length === 0) {
+              meetStore.qna = data.qna
+            }
+          } else if (data.type === 'chat-sync-req') {
+            if (meetStore.messages.length > 0) {
+              sendChatSyncResponse(participant.identity)
+            }
+          } else if (data.type === 'chat-sync-res') {
+            if (data.target === room.localParticipant.identity && meetStore.messages.length === 0) {
+              meetStore.messages = data.messages
+            }
           }
-        } catch {
-          // ignore malformed messages
+        } catch (err) {
+          console.error('[LiveKit DataReceived Error]', err)
         }
       })
 
+      // Safety check & dynamic translation for LiveKit WS URL before connecting
+      let finalWsUrl = wsUrl
+      if (finalWsUrl === 'undefined' || finalWsUrl === 'null' || !finalWsUrl) {
+        finalWsUrl = meetStore.livekitUrl || '/livekit'
+      }
+      
+      if (finalWsUrl.startsWith('/')) {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        finalWsUrl = `${protocol}//${window.location.host}${finalWsUrl}`
+      } else if (finalWsUrl.includes('localhost') && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        finalWsUrl = finalWsUrl.replace('localhost', window.location.hostname)
+      } else if (finalWsUrl.includes('127.0.0.1') && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        finalWsUrl = finalWsUrl.replace('127.0.0.1', window.location.hostname)
+      } else if (finalWsUrl.includes('livekit') && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !finalWsUrl.includes('.')) {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        finalWsUrl = `${protocol}//${window.location.host}/livekit`
+      }
+      
+      console.log('[useRoom] Connecting to LiveKit with resolved WS URL:', finalWsUrl)
+
       // Connect!
-      await room.connect(wsUrl, token)
+      await room.connect(finalWsUrl, token)
+
+      // Bungkus publishData untuk mencegah crash RTCDataChannel secara aman
+      const originalPublish = room.localParticipant.publishData.bind(room.localParticipant)
+      room.localParticipant.publishData = async (data, options) => {
+        if (room.state !== 'connected') {
+          console.warn('[LiveKit] Gagal mengirim: DataChannel tidak dalam status terhubung (state:', room.state, ')')
+          return
+        }
+        try {
+          return await originalPublish(data, options)
+        } catch (err) {
+          console.error('[LiveKit] publishData error terdeteksi & diamankan:', err)
+        }
+      }
 
       // Enable camera & mic sesuai store state & setelan resolusi terpilih
       await room.localParticipant.setMicrophoneEnabled(meetStore.isMicEnabled)
@@ -215,9 +324,12 @@ export function useRoom() {
 
       _syncParticipants()
 
-      // Minta sinkronisasi gambar papan tulis jika baru bergabung
+      // Minta sinkronisasi gambar papan tulis, jajak pendapat, tanya jawab, dan chat jika baru bergabung
       setTimeout(async () => {
         await sendWhiteboardSyncRequest()
+        await sendPollsSyncRequest()
+        await sendQnaSyncRequest()
+        await sendChatSyncRequest()
       }, 1000)
     } catch (err) {
       error.value = err.message
@@ -317,6 +429,37 @@ export function useRoom() {
       sender: lkRoom.value.localParticipant.name ?? 'You',
       senderId: lkRoom.value.localParticipant.identity,
       text: text.trim(),
+      isSelf: true,
+    })
+  }
+
+  /** Kirim berkas sharing via Data Channel */
+  async function sendFileShare(fileData) {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({
+      type: 'file-share',
+      file: {
+        name: fileData.name,
+        size: fileData.size,
+        type: fileData.type,
+        dataUrl: fileData.dataUrl
+      }
+    })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+    
+    // Tambahkan ke local messages
+    meetStore.addMessage({
+      sender: lkRoom.value.localParticipant.name ?? 'You',
+      senderId: lkRoom.value.localParticipant.identity,
+      file: {
+        name: fileData.name,
+        size: fileData.size,
+        type: fileData.type,
+        dataUrl: fileData.dataUrl
+      },
       isSelf: true,
     })
   }
@@ -502,6 +645,176 @@ export function useRoom() {
     )
   }
 
+  /** Kirim pembuatan Jajak Pendapat */
+  async function sendPollCreate(poll) {
+    if (lkRoom.value?.localParticipant) {
+      try {
+        const payload = JSON.stringify({ type: 'poll-create', poll })
+        await lkRoom.value.localParticipant.publishData(
+          new TextEncoder().encode(payload),
+          { reliable: true }
+        )
+      } catch (e) {
+        console.error('[useRoom] sendPollCreate error:', e)
+      }
+    }
+    meetStore.addPoll(poll)
+  }
+
+  /** Kirim vote Jajak Pendapat */
+  async function sendPollVote(pollId, optionId) {
+    const identity = lkRoom.value?.localParticipant?.identity || 'voter'
+    if (lkRoom.value?.localParticipant) {
+      try {
+        const payload = JSON.stringify({ type: 'poll-vote', pollId, optionId, voter: identity })
+        await lkRoom.value.localParticipant.publishData(
+          new TextEncoder().encode(payload),
+          { reliable: true }
+        )
+      } catch (e) {
+        console.error('[useRoom] sendPollVote error:', e)
+      }
+    }
+    meetStore.votePoll(pollId, optionId, identity)
+  }
+
+  /** Tutup Jajak Pendapat */
+  async function sendPollClose(pollId) {
+    if (lkRoom.value?.localParticipant) {
+      try {
+        const payload = JSON.stringify({ type: 'poll-close', pollId })
+        await lkRoom.value.localParticipant.publishData(
+          new TextEncoder().encode(payload),
+          { reliable: true }
+        )
+      } catch (e) {
+        console.error('[useRoom] sendPollClose error:', e)
+      }
+    }
+    meetStore.closePoll(pollId)
+  }
+
+  /** Kirim pertanyaan Q&A baru */
+  async function sendQnaAsk(question) {
+    if (lkRoom.value?.localParticipant) {
+      try {
+        const payload = JSON.stringify({ type: 'qna-ask', question })
+        await lkRoom.value.localParticipant.publishData(
+          new TextEncoder().encode(payload),
+          { reliable: true }
+        )
+      } catch (e) {
+        console.error('[useRoom] sendQnaAsk error:', e)
+      }
+    }
+    meetStore.addQuestion(question)
+  }
+
+  /** Kirim upvote Q&A */
+  async function sendQnaUpvote(questionId) {
+    const identity = lkRoom.value?.localParticipant?.identity || 'upvoter'
+    if (lkRoom.value?.localParticipant) {
+      try {
+        const payload = JSON.stringify({ type: 'qna-upvote', questionId, identity })
+        await lkRoom.value.localParticipant.publishData(
+          new TextEncoder().encode(payload),
+          { reliable: true }
+        )
+      } catch (e) {
+        console.error('[useRoom] sendQnaUpvote error:', e)
+      }
+    }
+    meetStore.upvoteQuestion(questionId, identity)
+  }
+
+  /** Kirim jawaban Q&A dari Host */
+  async function sendQnaAnswer(questionId, answerText) {
+    if (lkRoom.value?.localParticipant) {
+      try {
+        const payload = JSON.stringify({ type: 'qna-answer', questionId, answerText })
+        await lkRoom.value.localParticipant.publishData(
+          new TextEncoder().encode(payload),
+          { reliable: true }
+        )
+      } catch (e) {
+        console.error('[useRoom] sendQnaAnswer error:', e)
+      }
+    }
+    meetStore.answerQuestion(questionId, answerText)
+  }
+
+  /** Kirim permintaan sinkronisasi Polls */
+  async function sendPollsSyncRequest() {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({ type: 'polls-sync-req' })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+  }
+
+  /** Balas sinkronisasi Polls */
+  async function sendPollsSyncResponse(targetIdentity) {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({
+      type: 'polls-sync-res',
+      target: targetIdentity,
+      polls: meetStore.polls
+    })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+  }
+
+  /** Kirim permintaan sinkronisasi Q&A */
+  async function sendQnaSyncRequest() {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({ type: 'qna-sync-req' })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+  }
+
+  /** Balas sinkronisasi Q&A */
+  async function sendQnaSyncResponse(targetIdentity) {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({
+      type: 'qna-sync-res',
+      target: targetIdentity,
+      qna: meetStore.qna
+    })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+  }
+
+  /** Kirim permintaan sinkronisasi Chat */
+  async function sendChatSyncRequest() {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({ type: 'chat-sync-req' })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+  }
+
+  /** Balas sinkronisasi Chat */
+  async function sendChatSyncResponse(targetIdentity) {
+    if (!lkRoom.value) return
+    const payload = JSON.stringify({
+      type: 'chat-sync-res',
+      target: targetIdentity,
+      messages: meetStore.messages
+    })
+    await lkRoom.value.localParticipant.publishData(
+      new TextEncoder().encode(payload),
+      { reliable: true }
+    )
+  }
+
   onUnmounted(() => {
     disconnect()
   })
@@ -527,5 +840,18 @@ export function useRoom() {
     sendWhiteboardClear,
     sendWhiteboardSyncRequest,
     sendWhiteboardSyncResponse,
+    sendPollCreate,
+    sendPollVote,
+    sendPollClose,
+    sendQnaAsk,
+    sendQnaUpvote,
+    sendQnaAnswer,
+    sendPollsSyncRequest,
+    sendPollsSyncResponse,
+    sendQnaSyncRequest,
+    sendQnaSyncResponse,
+    sendFileShare,
+    sendChatSyncRequest,
+    sendChatSyncResponse,
   }
 }

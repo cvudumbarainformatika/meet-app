@@ -30,8 +30,7 @@
         <div class="flex items-center gap-2 bg-card rounded-xl px-3 py-2 border border-border">
           <Search class="h-4 w-4 text-muted-foreground" />
           <input
-            :value="search"
-            @input="emit('update:search', $event.target.value)"
+            v-model="search"
             type="text"
             placeholder="Cari peserta..."
             class="bg-transparent text-foreground text-xs outline-none flex-1 placeholder-muted-foreground"
@@ -127,24 +126,29 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { Users, X, Search, Mic, MicOff, Video as VideoIcon, VideoOff } from 'lucide-vue-next'
 
 const props = defineProps({
   show: Boolean,
   solid: Boolean,
-  participants: Array,
+  participants: {
+    type: Array,
+    default: () => []
+  },
   isHost: Boolean,
   hostName: String,
-  search: String,
 })
 
-const emit = defineEmits(['close', 'update:search', 'lower-hand', 'mute', 'mute-all', 'lower-all-hands'])
+const emit = defineEmits(['close', 'lower-hand', 'mute', 'mute-all', 'lower-all-hands'])
+
+const search = ref('')
 
 const filteredParticipants = computed(() => {
-  if (!props.search.trim()) return props.participants
-  const query = props.search.toLowerCase().trim()
-  return props.participants.filter(p => {
+  const list = props.participants || []
+  if (!search.value || !search.value.trim()) return list
+  const query = search.value.toLowerCase().trim()
+  return list.filter(p => {
     const name = (p.name || p.identity || '').toLowerCase()
     return name.includes(query)
   })

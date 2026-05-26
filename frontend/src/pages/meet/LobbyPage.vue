@@ -591,19 +591,7 @@
 
     </template>
 
-    <!-- Error Toast Notification -->
-    <Transition name="fade-slide-up">
-      <div
-        v-if="errorMsg"
-        class="fixed bottom-24 right-6 z-50 bg-destructive/10 border border-destructive/30 text-destructive px-5 py-4 rounded-xl text-sm flex items-center gap-3 shadow-2xl backdrop-blur-md animate-fade-in-up"
-      >
-        <AlertCircle class="h-5 w-5 flex-shrink-0" />
-        <span class="font-medium">{{ errorMsg }}</span>
-        <button @click="errorMsg = ''" class="ml-2 text-destructive hover:text-red-200 transition-colors">
-          <X class="h-4 w-4" />
-        </button>
-      </div>
-    </Transition>
+
 
     <!-- Backdrop Overlay untuk Mobile Bottom Sheet -->
     <Transition name="fade">
@@ -769,6 +757,7 @@ import { api as axios } from '@/boot/axios'
 import { useAuthStore } from '@/stores/auth'
 import { useMeetStore } from '@/stores/meet'
 import { useSettingsStore } from '@/stores/settings'
+import { useNotificationStore } from '@/stores/notification'
 
 // Import modular components
 import LobbyWelcome from '@/components/meet/LobbyWelcome.vue'
@@ -784,11 +773,11 @@ const route = useRoute()
 const auth = useAuthStore()
 const meetStore = useMeetStore()
 const settingsStore = useSettingsStore()
+const notificationStore = useNotificationStore()
 
 // --- State Utama ---
 const joining = ref(false)
 const creating = ref(false)
-const errorMsg = ref('')
 
 // State Kontrol Cepat Audio/Video terhubung ke Pinia Store
 const isMuted = computed({
@@ -893,7 +882,7 @@ async function fetchAdminData() {
 
 function copySlug(slug) {
   navigator.clipboard.writeText(slug)
-  alert('Slug tersalin: ' + slug)
+  notificationStore.showSuccess('Tersalin', 'Slug room ' + slug + ' berhasil disalin ke clipboard.')
 }
 
 // Toggle popup Room & fetch jika belum ada data
@@ -962,10 +951,11 @@ async function handleEndActiveSession(sessionId) {
     })
     if (res.data.success) {
       await fetchAdminData()
+      notificationStore.showSuccess('Sesi Diakhiri', 'Sesi rapat berhasil diakhiri secara manual.')
     }
   } catch (err) {
     console.error('Gagal mengakhiri sesi', err)
-    alert('Gagal mengakhiri sesi aktif')
+    notificationStore.showError('Gagal', 'Gagal mengakhiri sesi aktif.')
   }
 }
 
@@ -989,9 +979,10 @@ async function saveNotes() {
         mySessions.value[idx].notes = notesContent.value
       }
       showNotesDialog.value = false
+      notificationStore.showSuccess('Notulen Disimpan', 'Catatan notulen rapat berhasil disimpan.')
     }
   } catch (err) {
-    alert('Gagal menyimpan notulen')
+    notificationStore.showError('Gagal', 'Gagal menyimpan notulen rapat.')
   } finally {
     savingNotes.value = false
   }
@@ -1004,7 +995,6 @@ async function handleJoinRoom() {
     return
   }
   joining.value = true
-  errorMsg.value = ''
   try {
     const res = await axios.post('/api/tokens/join', {
       room_slug: joinForm.value.slug.trim(),
@@ -1016,7 +1006,8 @@ async function handleJoinRoom() {
       router.push(`/room/${joinForm.value.slug.trim()}`)
     }
   } catch (err) {
-    errorMsg.value = err.response?.data?.message ?? 'Gagal bergabung ke room'
+    const msg = err.response?.data?.message ?? 'Gagal bergabung ke room'
+    notificationStore.showError('Gagal Bergabung', msg)
     joinForm.value.showPassword = err.response?.status === 403
   } finally {
     joining.value = false
@@ -1030,7 +1021,6 @@ async function handleCreateRoom() {
     return
   }
   creating.value = true
-  errorMsg.value = ''
   try {
     const res = await axios.post('/api/rooms', {
       name: createForm.value.name.trim(),
@@ -1051,7 +1041,8 @@ async function handleCreateRoom() {
       }
     }
   } catch (err) {
-    errorMsg.value = err.response?.data?.message ?? 'Gagal membuat room'
+    const msg = err.response?.data?.message ?? 'Gagal membuat room'
+    notificationStore.showError('Gagal Membuat Room', msg)
   } finally {
     creating.value = false
   }

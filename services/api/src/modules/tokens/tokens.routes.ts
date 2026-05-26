@@ -60,11 +60,12 @@ export default async function tokensRoutes(fastify: FastifyInstance) {
       const user = request.user as any
       const isHost = room.host_id === user.sub
 
-      // Generate LiveKit JWT token
+      // Generate LiveKit JWT token dengan suffix unik (agar mendukung multi-tab/multi-device dengan akun sama saat testing)
+      const uniqueParticipantId = `${user.sub}_${Math.random().toString(36).substring(2, 8)}`
       const token = await tokensService.generateToken({
         roomName: room.slug,  // LiveKit room name = slug
         participantName: user.name,
-        participantId: user.sub,
+        participantId: uniqueParticipantId,
         isHost,
         metadata: JSON.stringify({ userId: user.sub, email: user.email }),
       })

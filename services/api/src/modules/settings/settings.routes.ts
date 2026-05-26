@@ -45,10 +45,18 @@ export default async function settingsRoutes(fastify: FastifyInstance) {
       }
 
       try {
-        const updated = await settingsService.updateSettings(parsed.data)
+        const updated = await settingsService.updateSettings({
+          app_name: parsed.data.app_name,
+          primary_color: parsed.data.primary_color,
+          background_color: parsed.data.background_color,
+          sidebar_color: parsed.data.sidebar_color,
+          card_color: parsed.data.card_color,
+          logo_url: parsed.data.logo_url ?? null,
+          theme_mode: parsed.data.theme_mode ?? 'dark'
+        })
         return reply.send({ success: true, data: updated })
       } catch (err) {
-        fastify.log.error('Gagal memperbarui pengaturan aplikasi:', err)
+        fastify.log.error(err, 'Gagal memperbarui pengaturan aplikasi:')
         return reply.status(500).send({ 
           success: false, 
           message: 'Gagal memperbarui pengaturan penampilan aplikasi' 

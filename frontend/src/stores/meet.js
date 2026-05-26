@@ -40,6 +40,11 @@ export const useMeetStore = defineStore('meet', () => {
   const isWhiteboardActive = ref(false)
   const whiteboardHistory = ref([])
 
+  // --- Polls & Q&A State ---
+  const polls = ref([])
+  const qna = ref([])
+  const showPollsQna = ref(false)
+
   // --- Computed ---
   const isConnected = computed(() => connectionState.value === 'connected')
   const participantCount = computed(() => participants.value.length)
@@ -48,7 +53,32 @@ export const useMeetStore = defineStore('meet', () => {
   function setRoom(roomData, tokenData, livekitWsUrl, hostStatus) {
     room.value = roomData
     token.value = tokenData
-    livekitUrl.value = livekitWsUrl
+    
+    // Safety check: ignore invalid string values like "undefined" or "null" or empty strings
+    let resolvedUrl = livekitWsUrl
+    if (resolvedUrl === 'undefined' || resolvedUrl === 'null' || !resolvedUrl) {
+      resolvedUrl = '/livekit' // Fallback to safe relative path
+    }
+    
+    if (resolvedUrl) {
+      if (resolvedUrl.startsWith('/')) {
+        // Relative path
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        resolvedUrl = `${protocol}//${window.location.host}${resolvedUrl}`
+      } else if (resolvedUrl.includes('localhost') && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        // Rewrite localhost to the actual IP/hostname of this server
+        resolvedUrl = resolvedUrl.replace('localhost', window.location.hostname)
+      } else if (resolvedUrl.includes('127.0.0.1') && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        // Rewrite 127.0.0.1 to the actual IP/hostname of this server
+        resolvedUrl = resolvedUrl.replace('127.0.0.1', window.location.hostname)
+      } else if (resolvedUrl.includes('livekit') && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !resolvedUrl.includes('.')) {
+        // Rewrite internal Docker hostname 'livekit' to the current domain and use path /livekit
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        resolvedUrl = `${protocol}//${window.location.host}/livekit`
+      }
+    }
+    
+    livekitUrl.value = resolvedUrl
     isHost.value = hostStatus
   }
 
@@ -72,6 +102,9 @@ export const useMeetStore = defineStore('meet', () => {
     virtualBackground.value = 'none'
     isWhiteboardActive.value = false
     whiteboardHistory.value = []
+    polls.value = []
+    qna.value = []
+    showPollsQna.value = false
   }
 
   function setConnectionState(state) {
@@ -150,12 +183,78 @@ export const useMeetStore = defineStore('meet', () => {
     whiteboardHistory.value = []
   }
 
+  // --- Polls & Q&A Actions ---
+  function addPoll(poll) {
+    if (!polls.value.some(p => p.id === poll.id)) {
+      polls.value = [...polls.value, poll]
+    }
+  }
+
+  function votePoll(pollId, optionId, identity) {
+    polls.value = polls.value.map(p => {
+      if (p.id !== pollId) return p
+      
+      const newOptions = p.options.map(opt => {
+        let votes = opt.votes
+        if (votes.includes(identity)) {
+          votes = votes.filter(v => v !== identity)
+        }
+        if (opt.id === optionId) {
+          votes = [...votes, identity]
+        }
+        return { ...opt, votes }
+      })
+      
+      return { ...p, options: newOptions }
+    })
+  }
+
+  function closePoll(pollId) {
+    polls.value = polls.value.map(p => {
+      if (p.id === pollId) {
+        return { ...p, isClosed: true }
+      }
+      return p
+    })
+  }
+
+  function addQuestion(question) {
+    if (!qna.value.some(q => q.id === question.id)) {
+      qna.value = [...qna.value, question]
+    }
+  }
+
+  function upvoteQuestion(questionId, identity) {
+    qna.value = qna.value.map(q => {
+      if (q.id !== questionId) return q
+      const hasVoted = q.upvotes.includes(identity)
+      const upvotes = hasVoted 
+        ? q.upvotes.filter(v => v !== identity)
+        : [...q.upvotes, identity]
+      return { ...q, upvotes }
+    })
+  }
+
+  function answerQuestion(questionId, answerText) {
+    qna.value = qna.value.map(q => {
+      if (q.id === questionId) {
+        return { ...q, isAnswered: true, answerText }
+      }
+      return q
+    })
+  }
+
+  function setPollsQnaActive(val) {
+    showPollsQna.value = val
+  }
+
   return {
     // State
     room, token, livekitUrl, isHost, currentSessionId,
     connectionState, isMicEnabled, isCameraEnabled, isScreenSharing, cameraResolution,
     isNoiseSuppressionEnabled, isCrispVoiceEnabled, virtualBackground,
     isWhiteboardActive, whiteboardHistory,
+    polls, qna, showPollsQna,
     participants, messages, raisedHands, isRecording, showParticipants, reactions,
     // Computed
     isConnected, participantCount,
@@ -165,6 +264,7 @@ export const useMeetStore = defineStore('meet', () => {
     setNoiseSuppression, setCrispVoice, setVirtualBackground,
     toggleWhiteboard, setWhiteboardActive, addWhiteboardAction, clearWhiteboardHistory,
     setHandRaised, setRecording,
+    addPoll, votePoll, closePoll, addQuestion, upvoteQuestion, answerQuestion, setPollsQnaActive,
   }
 }, {
   persist: false, // Jangan persist — state meeting bersifat sementara

@@ -210,9 +210,9 @@
 import { ref, watch, onBeforeUnmount } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Placeholder from '@tiptap/extension-placeholder'
+import { useNotificationStore } from '@/stores/notification'
 
 import {
   FileText, X, Loader2, Save, Download,
@@ -233,13 +233,13 @@ const emit = defineEmits(['close', 'save', 'update:modelValue'])
 
 const pdfContent = ref(null)
 const downloading = ref(false)
+const notificationStore = useNotificationStore()
 
 // ===== Tiptap Editor =====
 const editor = useEditor({
   content: props.modelValue || '',
   extensions: [
-    StarterKit,
-    Underline,
+    StarterKit.configure(),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Placeholder.configure({
       placeholder: 'Tuliskan catatan, keputusan, atau poin penting rapat di sini...',
@@ -286,9 +286,10 @@ async function downloadPdf() {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     }
     await html2pdf().set(opt).from(pdfContent.value).save()
+    notificationStore.showSuccess('Unduh Sukses', 'Notulen rapat berhasil disimpan sebagai PDF.')
   } catch (e) {
     console.error('PDF error:', e)
-    alert('Gagal mengunduh PDF')
+    notificationStore.showError('Unduh Gagal', 'Gagal mengunduh notulen rapat sebagai PDF.')
   } finally {
     downloading.value = false
   }

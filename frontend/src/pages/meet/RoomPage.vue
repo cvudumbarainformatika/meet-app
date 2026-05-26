@@ -83,24 +83,32 @@
             </button>
           </div>
 
-          <!-- Row 2: Join Button (always visible) -->
-          <Button
-            @click="joinMeeting"
-            size="lg"
-            class="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-600/95 text-primary-foreground font-bold text-sm transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] duration-200"
-          >
-            <span>Gabung Rapat</span>
-            <ArrowRight class="h-4.5 w-4.5" />
-          </Button>
+          <!-- Row 2: Batal & Join Button (always visible) -->
+          <div class="flex items-center gap-2.5">
+            <button
+              @click="cancelJoin"
+              class="h-12 px-4 rounded-xl flex items-center justify-center border border-white/10 bg-white/5 text-muted-foreground hover:text-white text-xs font-bold transition-all duration-200 active:scale-95 cursor-pointer flex-shrink-0"
+            >
+              <span>Batal</span>
+            </button>
+            <Button
+              @click="joinMeeting"
+              size="lg"
+              class="flex-1 h-12 rounded-xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-600/95 text-primary-foreground font-bold text-sm transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] duration-200"
+            >
+              <span>Gabung Rapat</span>
+              <ArrowRight class="h-4.5 w-4.5" />
+            </Button>
+          </div>
         </div>
       </div>
 
       <!-- ═══ DESKTOP LAYOUT (unchanged, original 2-column grid) ═══ -->
       <div class="hidden lg:flex flex-1 justify-center items-center p-6 md:p-8">
-        <div class="w-full max-w-5xl bg-card/40 backdrop-blur-3xl border border-white/10 rounded-[32px] p-8 md:p-10 shadow-2xl grid grid-cols-12 gap-12 items-stretch relative z-10">
+        <div class="desktop-lobby-card w-full max-w-5xl bg-card/40 backdrop-blur-3xl border border-white/10 rounded-[32px] p-8 md:p-10 shadow-2xl grid grid-cols-12 gap-12 items-stretch relative z-10">
 
           <!-- Kolom Kiri: Video Preview & Audio Tester & Effects (col-span-7) -->
-          <div class="col-span-7 flex flex-col gap-6">
+          <div class="desktop-lobby-left col-span-7 flex flex-col gap-6">
             <!-- Video preview card -->
             <div class="w-full aspect-video bg-black/40 rounded-3xl border border-white/5 overflow-hidden relative shadow-inner shadow-black/50 transition-all duration-300 hover:scale-[1.005] group">
               <div class="absolute inset-0 border border-primary/20 rounded-3xl pointer-events-none group-hover:border-primary/40 transition-colors duration-500"></div>
@@ -144,7 +152,7 @@
             </div>
 
             <!-- Tester Audio (Desktop Only) -->
-            <div class="flex flex-col gap-2 bg-white/5 border border-white/5 px-5 py-4 rounded-3xl shadow-lg relative overflow-hidden group">
+            <div class="desktop-audio-tester flex flex-col gap-2 bg-white/5 border border-white/5 px-5 py-4 rounded-3xl shadow-lg relative overflow-hidden group">
               <div class="flex justify-between items-center">
                 <div class="flex items-center gap-2">
                   <Mic class="h-4.5 w-4.5 text-primary" />
@@ -167,7 +175,7 @@
             </div>
 
             <!-- Efek Video & Audio Premium (Desktop Only) -->
-            <div class="flex flex-col gap-4 bg-white/5 border border-white/5 px-5 py-4 rounded-3xl shadow-lg relative overflow-hidden group">
+            <div class="desktop-effects-card flex flex-col gap-4 bg-white/5 border border-white/5 px-5 py-4 rounded-3xl shadow-lg relative overflow-hidden group">
               <div class="flex items-center gap-2">
                 <Sparkles class="h-4.5 w-4.5 text-primary animate-pulse" />
                 <span class="text-xs text-muted-foreground font-bold uppercase tracking-wider">Efek Media Premium</span>
@@ -227,13 +235,13 @@
           </div>
 
           <!-- Kolom Kanan: Rapat Info & Hardware Selectors (col-span-5) -->
-          <div class="col-span-5 flex flex-col justify-between self-stretch py-1 gap-6">
-            <div class="flex flex-col gap-6">
-              <div class="text-left">
+          <div class="desktop-lobby-right col-span-5 flex flex-col justify-between self-stretch py-1 gap-6">
+            <div class="desktop-lobby-right-inner flex flex-col gap-6">
+              <div class="desktop-lobby-right-title text-left">
                 <h2 class="text-foreground font-bold text-2xl sm:text-3xl tracking-tight">Siap Bergabung?</h2>
                 <p class="text-xs text-muted-foreground mt-1">Atur perangkat keras Anda dengan sempurna sebelum masuk rapat.</p>
               </div>
-              <div class="flex p-5 bg-white/5 border border-white/5 rounded-3xl flex-col gap-2.5 relative overflow-hidden group hover:bg-white/10 transition-all duration-300 shadow-lg">
+              <div class="desktop-room-card flex p-5 bg-white/5 border border-white/5 rounded-3xl flex-col gap-2.5 relative overflow-hidden group hover:bg-white/10 transition-all duration-300 shadow-lg">
                 <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-300"></div>
                 <span class="text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-left">Nama Rapat</span>
                 <span class="text-xl font-bold text-foreground text-left leading-none tracking-tight">{{ meetStore.room?.name ?? 'Loading Rapat...' }}</span>
@@ -245,7 +253,7 @@
                   <span>{{ meetStore.participantCount }} Peserta Aktif</span>
                 </div>
               </div>
-              <div class="flex flex-col gap-4 text-left">
+              <div class="desktop-device-selectors flex flex-col gap-4 text-left">
                 <AppSelect
                   id="camera-select"
                   label="Pilih Kamera"
@@ -268,13 +276,22 @@
                 />
               </div>
             </div>
-            <Button
-              @click="joinMeeting"
-              class="w-full h-14 rounded-2xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-600/95 text-primary-foreground font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2.5 cursor-pointer hover:shadow-primary/45 active:scale-[0.98] duration-200 mt-6"
-            >
-              <span>Gabung Rapat</span>
-              <ArrowRight class="h-5 w-5" />
-            </Button>
+            <div class="flex items-center gap-4 mt-6">
+              <Button
+                @click="cancelJoin"
+                variant="outline"
+                class="desktop-cancel-btn px-6 h-14 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground font-semibold text-base transition-all duration-200 cursor-pointer flex-shrink-0"
+              >
+                <span>Batal</span>
+              </Button>
+              <Button
+                @click="joinMeeting"
+                class="desktop-join-btn flex-1 h-14 rounded-2xl bg-gradient-to-r from-primary to-blue-600 hover:from-primary/95 hover:to-blue-600/95 text-primary-foreground font-bold text-base transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2.5 cursor-pointer hover:shadow-primary/45 active:scale-[0.98] duration-200"
+              >
+                <span>Gabung Rapat</span>
+                <ArrowRight class="h-5 w-5" />
+              </Button>
+            </div>
           </div>
 
         </div>
@@ -325,9 +342,13 @@
             <span class="hidden sm:inline">Chat</span>
             <span v-if="unreadCount > 0" class="bg-destructive text-destructive-foreground text-[9px] rounded-full px-1.5 py-0.5 ml-0.5">{{ unreadCount }}</span>
           </button>
+          <button @click="meetStore.setPollsQnaActive(!meetStore.showPollsQna)" class="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground text-xs transition-all" :class="{ 'bg-primary/20 text-primary': meetStore.showPollsQna }">
+            <Vote class="h-3.5 w-3.5" />
+            <span class="hidden sm:inline">Interaksi</span>
+          </button>
         </div>
       </div>
-
+ 
       <!-- ── Main Area ── -->
       <div class="flex-1 flex overflow-hidden min-h-0 relative">
         
@@ -341,7 +362,7 @@
             class="flex-1 min-w-0 min-h-0 border border-border bg-card rounded-2xl overflow-hidden m-3 shadow-2xl relative"
           />
         </Transition>
-
+ 
         <!-- Video Grid Area -->
         <div 
           v-show="!meetStore.isWhiteboardActive || (meetStore.isWhiteboardActive && !isMobile)"
@@ -367,9 +388,78 @@
             </div>
           </div>
         </div>
-
-        <RoomChat :show="showChat" v-model:solid="chatSolid" :messages="meetStore.messages" @close="showChat = false" @send="sendChat" />
+ 
+        <RoomChat
+          :show="showChat"
+          v-model:solid="chatSolid"
+          :messages="meetStore.messages"
+          @close="showChat = false"
+          @send="sendChat"
+          @send-file="handleSendFile"
+          @preview-file="handlePreviewFile"
+        />
         <RoomParticipants :show="meetStore.showParticipants" :solid="chatSolid" :participants="meetStore.participants" :is-host="meetStore.isHost" @close="meetStore.showParticipants = false" @lower-hand="lowerRemoteHand" @mute="muteRemoteParticipant" @mute-all="muteAllParticipants" @lower-all-hands="lowerAllHands" />
+        <RoomPollsQna :show="meetStore.showPollsQna" v-model:solid="chatSolid" @close="meetStore.showPollsQna = false" />
+
+        <!-- Premium Document & Image Preview Modal -->
+        <q-dialog v-model="showPreviewModal" persistent>
+          <div class="bg-card/95 backdrop-blur-xl border border-border rounded-2xl w-[90vw] max-w-4xl h-[85vh] shadow-2xl flex flex-col overflow-hidden animate-none">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-border flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-3">
+                <div class="p-2 bg-primary/10 rounded-xl">
+                  <component :is="getFileIcon(previewingFile?.name, previewingFile?.type)" class="h-5 w-5 text-primary" />
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-sm font-bold text-foreground truncate pr-4">{{ previewingFile?.name }}</h3>
+                  <p class="text-[10px] text-muted-foreground mt-0.5">{{ formatFileSize(previewingFile?.size) }} &bull; Pratinjau Rapat</p>
+                </div>
+              </div>
+              <button
+                @click="showPreviewModal = false"
+                class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+              >
+                <X class="h-5 w-5" />
+              </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 bg-black/40 overflow-auto flex items-center justify-center p-4">
+              <!-- Image Preview -->
+              <img
+                v-if="previewingFile?.type.startsWith('image/')"
+                :src="previewingFile.dataUrl"
+                class="max-w-full max-h-full object-contain rounded-lg shadow-xl"
+                alt="Pratinjau Gambar"
+              />
+
+              <!-- PDF Preview -->
+              <iframe
+                v-else-if="previewingFile?.name.split('.').pop().toLowerCase() === 'pdf'"
+                :src="previewingFile.dataUrl"
+                class="w-full h-full border-none rounded-lg shadow-xl bg-white"
+                title="Pratinjau PDF"
+              ></iframe>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-border bg-card/50 flex justify-end items-center gap-3 shrink-0">
+              <button
+                @click="showPreviewModal = false"
+                class="px-5 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-medium transition-all text-xs cursor-pointer"
+              >
+                Tutup
+              </button>
+              <button
+                @click="downloadFile(previewingFile)"
+                class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all flex items-center gap-2 text-xs cursor-pointer"
+              >
+                <Download class="h-4 w-4" />
+                Unduh File
+              </button>
+            </div>
+          </div>
+        </q-dialog>
 
         <!-- Floating Emoji Reactions -->
         <div class="fixed bottom-24 left-6 z-50 pointer-events-none flex flex-col gap-2">
@@ -395,6 +485,7 @@
       :is-recording="meetStore.isRecording"
       :show-participants="meetStore.showParticipants"
       :show-whiteboard="meetStore.isWhiteboardActive"
+      :show-polls-qna="meetStore.showPollsQna"
       @toggle-mic="roomComposable.toggleMic"
       @toggle-camera="roomComposable.toggleCamera"
       @toggle-screen-share="roomComposable.toggleScreenShare"
@@ -406,6 +497,7 @@
       @leave="leaveRoom"
       @toggle-participants="toggleParticipantsPanel"
       @toggle-whiteboard="toggleWhiteboardPanel"
+      @toggle-polls-qna="togglePollsQnaPanel"
       @open-settings="showSettingsDialog = true"
     />
     </template>
@@ -525,7 +617,8 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   Video, Copy, MessageSquare, Clock, Users, ChevronLeft, ChevronRight, Settings, Check, X,
-  Mic, MicOff, Camera, CameraOff, ArrowRight, ChevronDown, Sliders, Sparkles
+  Mic, MicOff, Camera, CameraOff, ArrowRight, ChevronDown, Sliders, Sparkles, Vote,
+  Download, FileText, Image as ImageIcon, FileSpreadsheet, Presentation
 } from 'lucide-vue-next'
 import { useMeetStore } from '@/stores/meet'
 import { useRoom } from '@/composables/useRoom'
@@ -534,6 +627,7 @@ import RoomChat from '@/components/meet/RoomChat.vue'
 import RoomParticipants from '@/components/meet/RoomParticipants.vue'
 import RoomControlBar from '@/components/meet/RoomControlBar.vue'
 import RoomWhiteboard from '@/components/meet/RoomWhiteboard.vue'
+import RoomPollsQna from '@/components/meet/RoomPollsQna.vue'
 import { useNotificationStore } from '@/stores/notification'
 import { api as axios } from '@/boot/axios'
 import AppSelect from '@/components/AppSelect.vue'
@@ -567,7 +661,10 @@ const connectionAttempted = ref(false)
 const unreadCount = ref(0)
 const chatSolid = ref(false)
 const showSettingsDialog = ref(false)
+const showPreviewModal = ref(false)
+const previewingFile = ref(null)
 
+let isUnmounting = false
 const isMobile = ref(false)
 function checkMobile() {
   isMobile.value = window.innerWidth < 1024
@@ -608,6 +705,8 @@ const unpinnedParticipants = computed(() => {
   return meetStore.participants.filter(p => p.identity !== pinnedId.value)
 })
 
+const currentPage = ref(1)
+
 // --- Pagination ---
 const tilesPerPage = computed(() => {
   const count = unpinnedParticipants.value.length
@@ -634,6 +733,7 @@ function nextPage() {
 
 // Reset ke halaman 1 jika jumlah participant berubah
 watch(() => unpinnedParticipants.value.length, () => {
+  if (isUnmounting) return
   currentPage.value = 1
 })
 
@@ -1165,6 +1265,11 @@ async function applyProcessedTracksToLiveKit() {
   }
 }
 
+function cancelJoin() {
+  stopLocalPreview()
+  router.push('/')
+}
+
 async function joinMeeting() {
   // Jangan hentikan media processor, melainkan transisikan secara zero-blink!
   if (meetStore.isMicEnabled !== tempMicEnabled.value) {
@@ -1305,25 +1410,30 @@ onMounted(async () => {
 
 // Watchers untuk efek media
 watch(() => meetStore.virtualBackground, async (newVal) => {
+  if (isUnmounting) return
   if (newVal !== 'none' && !isMediaPipeLoaded.value) {
     await initSelfieSegmentation()
   }
 })
 
 watch(() => meetStore.isNoiseSuppressionEnabled, () => {
+  if (isUnmounting) return
   updateAudioDSPConnections()
 })
 
 watch(() => meetStore.isCrispVoiceEnabled, () => {
+  if (isUnmounting) return
   updateAudioDSPConnections()
 })
 
 watch(() => meetStore.cameraResolution, async () => {
+  if (isUnmounting) return
   // Mulai ulang processor untuk meresolusi kamera baru baik di lobi maupun rapat aktif
   await startMediaProcessor()
 })
 
 watch(() => meetStore.messages.length, () => {
+  if (isUnmounting) return
   if (!showChat.value) {
     unreadCount.value++
   }
@@ -1332,6 +1442,7 @@ watch(() => meetStore.messages.length, () => {
 watch(showChat, (val) => {
   if (val) {
     meetStore.showParticipants = false
+    meetStore.showPollsQna = false
     unreadCount.value = 0
   }
 })
@@ -1339,12 +1450,58 @@ watch(showChat, (val) => {
 watch(() => meetStore.showParticipants, (val) => {
   if (val) {
     showChat.value = false
+    meetStore.showPollsQna = false
+  }
+})
+
+watch(() => meetStore.showPollsQna, (val) => {
+  if (val) {
+    showChat.value = false
+    meetStore.showParticipants = false
   }
 })
 
 // --- Actions ---
 async function sendChat(text) {
   await roomComposable.sendChatMessage(text)
+}
+
+async function handleSendFile(fileData) {
+  await roomComposable.sendFileShare(fileData)
+}
+
+function handlePreviewFile(file) {
+  previewingFile.value = file
+  showPreviewModal.value = true
+}
+
+function getFileIcon(name, type) {
+  if (!name) return FileText
+  const ext = name.split('.').pop().toLowerCase()
+  if (ext === 'pdf') return FileText
+  if (type?.startsWith('image/')) return ImageIcon
+  if (['xlsx', 'xls', 'csv'].includes(ext)) return FileSpreadsheet
+  if (['pptx', 'ppt'].includes(ext)) return Presentation
+  return FileText
+}
+
+function formatFileSize(bytes) {
+  if (!bytes) return '0 B'
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+
+function downloadFile(file) {
+  if (!file) return
+  const link = document.createElement('a')
+  link.href = file.dataUrl
+  link.download = file.name
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 async function leaveRoom() {
@@ -1387,6 +1544,10 @@ async function toggleRecording() {
 
 function toggleParticipantsPanel() {
   meetStore.showParticipants = !meetStore.showParticipants
+}
+
+function togglePollsQnaPanel() {
+  meetStore.setPollsQnaActive(!meetStore.showPollsQna)
 }
 
 async function changeResolution(presetName) {
@@ -1445,6 +1606,7 @@ function handleWindowUnload() {
 }
 
 onBeforeUnmount(() => {
+  isUnmounting = true
   window.removeEventListener('resize', checkMobile)
   window.removeEventListener('beforeunload', handleWindowUnload)
   if (timerInterval) clearInterval(timerInterval)
@@ -1486,28 +1648,41 @@ onBeforeUnmount(() => {
   transition: transform 0.3s ease;
 }
 
-/* Reactions Floating Animation */
-@keyframes reaction-float {
+/* Reactions Floating Animation - Premium float-up style */
+.float-up-enter-active {
+  animation: premium-float 3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.float-up-leave-active {
+  transition: all 0.5s ease;
+}
+.float-up-leave-to {
+  opacity: 0;
+  transform: translateY(-120px) scale(0.8);
+  filter: blur(4px);
+}
+@keyframes premium-float {
   0% {
-    transform: translateY(20px) scale(0.8);
+    transform: translateY(40px) scale(0.5) rotate(-10deg);
     opacity: 0;
+    filter: blur(4px);
   }
   15% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1.15) rotate(8deg);
     opacity: 1;
+    filter: blur(0);
   }
-  80% {
-    transform: translateY(-80px) scale(1);
+  35% {
+    transform: translateY(-30px) scale(1) rotate(-8deg);
+  }
+  65% {
+    transform: translateY(-80px) scale(1) rotate(6deg);
     opacity: 1;
   }
   100% {
-    transform: translateY(-120px) scale(0.9);
+    transform: translateY(-130px) scale(0.8) rotate(-4deg);
     opacity: 0;
+    filter: blur(1.5px);
   }
-}
-
-.animate-reaction-float {
-  animation: reaction-float 4s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
 }
 
 /* Custom select reset & styling for professional Carets */
@@ -1526,4 +1701,78 @@ onBeforeUnmount(() => {
   font-weight: 600;
   padding: 12px;
 }
+
+/* Responsive Layout untuk Desktop dengan Layar Pendek (Tinggi Viewport < 840px) */
+@media (max-height: 840px) {
+  /* Kurangi padding & gap di container utama desktop */
+  .desktop-lobby-card {
+    padding: 1.25rem 1.5rem !important; /* dari p-8 md:p-10 */
+    gap: 1.25rem !important; /* dari gap-12 */
+    border-radius: 24px !important;
+  }
+  
+  /* Sisi Kiri */
+  .desktop-lobby-left {
+    gap: 0.75rem !important; /* dari gap-6 */
+  }
+  
+  /* Tes input suara */
+  .desktop-audio-tester {
+    padding: 0.65rem 1rem !important; /* dari px-5 py-4 */
+    margin-top: -0.25rem !important;
+  }
+  
+  /* Efek media premium */
+  .desktop-effects-card {
+    padding: 0.75rem 1rem !important; /* dari px-5 py-4 */
+    gap: 0.5rem !important; /* dari gap-4 */
+  }
+  .desktop-effects-card button {
+    padding-top: 0.4rem !important;
+    padding-bottom: 0.4rem !important;
+  }
+  
+  /* Sisi Kanan */
+  .desktop-lobby-right {
+    gap: 0.75rem !important; /* dari gap-6 */
+  }
+  .desktop-lobby-right-inner {
+    gap: 0.75rem !important; /* dari gap-6 */
+  }
+  .desktop-lobby-right-title h2 {
+    font-size: 1.35rem !important; /* dari text-2xl/3xl */
+    line-height: 1.2 !important;
+  }
+  .desktop-lobby-right-title p {
+    display: none !important; /* Sembunyikan deskripsi kecil untuk menghemat tinggi layar secara drastis */
+  }
+  .desktop-room-card {
+    padding: 0.75rem 1rem !important; /* dari p-5 */
+  }
+  .desktop-room-card span.text-xl {
+    font-size: 1.1rem !important;
+  }
+  
+  /* Pertahankan tumpukan vertikal asli sesuai selera user, tapi perpendek gap antar select */
+  .desktop-device-selectors {
+    gap: 0.5rem !important;
+  }
+  
+  /* Tombol Gabung Rapat & Batal */
+  .desktop-join-btn {
+    height: 3.25rem !important; /* dari h-14 */
+    border-radius: 14px !important;
+    font-size: 0.9rem !important;
+  }
+  .desktop-cancel-btn {
+    height: 3.25rem !important; /* dari h-14 */
+    border-radius: 14px !important;
+    font-size: 0.9rem !important;
+  }
+  .desktop-lobby-right .flex.items-center.gap-4.mt-6 {
+    margin-top: 0.25rem !important; /* kurangi margin top baris tombol */
+  }
+}
 </style>
+
+
